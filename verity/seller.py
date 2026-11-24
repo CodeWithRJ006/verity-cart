@@ -1,0 +1,147 @@
+# verity/seller.py — Orchestrator (Dev1). Stdlib-only Python 3.9.
+from __future__ import annotations
+import json
+import os
+from typing import Any, Dict, Optional
+
+from .contracts import Action, Decision, Mode, RepairStatus
+from .config import Config
+from .registry import load_impl
+from .envelope import Envelope
+from . import parser
+from .state import NegotiationState
+from . import gate
+from . import renderer
+from . import truth
+
+
+class Seller:
+    def __init__(self, store: dict, policy: dict, params: Optional[dict] = None):
+        self.store = store
+        self.policy = policy
+        self.env = Envelope(store, policy)
+
+        # VERITY_SWITCHES: unknown key raises at construction
+        switches_str = os.environ.get("VERITY_SWITCHES", "")
+        self.cfg = Config.from_switches(switches_str)
+        if params:
+            for k, v in params.items():
+                if not hasattr(self.cfg, k):
+                    raise ValueError(f"Unknown config param: {k!r}")
+                setattr(self.cfg, k, v)
+
+        # VERITY_IMPL: default "stub"
+        self.impl_name = os.environ.get("VERITY_IMPL", "stub")
+        self.strategy_cls, self.repair = load_impl(self.impl_name)
+        self.strategy = self.strategy_cls(self.cfg)
+
+        # VERITY_LOG
+        self.log_path = os.environ.get("VERITY_LOG")
+
+        self.state: Optional[NegotiationState] = None
+        self.last_offer: Optional[dict] = None
+        self.negotiation_id: Optional[str] = None
+
+    def start(self, negotiation_id: str) -> None:
+        self.negotiation_id = negotiation_id
+        self.state = NegotiationState(self.store, self.policy, self.env)
+        self.last_offer = None
+
+    def respond(self, message: dict) -> dict:
+        try:
+            return self._respond(message)
+        except Exception:
+            return self._fallback()
+
+    def _fallback(self) -> dict:
+        # Fallback ladder F:
+        # (1) Revalidate last offer vs CURRENT state and schema
+        if self.last_offer and self.state and self.state.basket:
+            ok, _ = gate.check_outgoing(self.last_offer, self.state.basket, self.env)
+            if ok:
+                return self.last_offer
+        # (2) Otherwise walk away with plain text
+        return {
+            "type": "walk_away",
+            "text": renderer.render("walkaway", [], 0, store=self.store),
+        }
+
+    def _respond(self, message: dict) -> dict:
+        parsed = parser.parse(message)
+        if parsed.type in ("walk_away", "accept"):
+            return {"type": "message", "text": "Thank you, goodbye."}
+
+        view = self.state.view(parsed)
+        if not self.state.basket:
+            return {
+                "type": "walk_away",
+                "text": renderer.render(
+                    "walkaway_nostock" if self.state.dropped else "walkaway",
+                    [],
+                    0,
+                    self.state.dropped,
+                    store=self.store,
+                ),
+            }
+
+        decision = self.strategy.decide(view)
+
+        if decision.action == Action.WALK_AWAY:
+            return {
+                "type": "walk_away",
+                "text": renderer.render("walkaway", [], 0, self.state.dropped, store=self.store),
+            }
+
+        if decision.action == Action.ACCEPT:
+            if gate.bid_valid_as_made(parsed.items, self.state.basket, self.env):
+                return {
+                    "type": "accept",
+                    "text": renderer.render("accept", [], 0, store=self.store),
+                }
+            # If invalid as made, convert to counter at floor
+            fr = view.F / view.L if view.L else 1.0
+            decision = Decision(action=Action.COUNTER, total=view.F, mode=Mode.AT_MOST, ratio=fr)
+
+        # Action.COUNTER
+        target = decision.total if decision.total is not None else view.L
+        if decision.mode == Mode.EXACT:
+            repair_res = self.repair.allocate_exact(self.state.basket, self.env, target)
+        else:
+            repair_res = self.repair.allocate_at_most(self.state.basket, self.env, target)
+
+        if repair_res.status not in (RepairStatus.EXACT, RepairStatus.AT_MOST) or not repair_res.prices:
+            return self._fallback()
+
+        items = [
+            {"sku": k, "qty": q, "unit_price": repair_res.prices[k]}
+            for k, q in self.state.basket.items()
+        ]
+        total = sum(i["qty"] * i["unit_price"] for i in items)
+        text = renderer.render("counter", items, total, self.state.dropped, store=self.store)
+        out = {"type": "offer", "items": items, "text": text}
+
+        # Gate check
+        ok, reasons = gate.check_outgoing(out, self.state.basket, self.env)
+        # Truth check
+        t_errs = truth.check(out["text"])
+        if not ok or t_errs:
+            return self._fallback()
+
+        self.state.remember(out)
+        self.last_offer = out
+
+        if self.log_path:
+            try:
+                with open(self.log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "round": view.round,
+                        "action": decision.action.value,
+                        "total": total,
+                        "ratio": decision.ratio,
+                        "reason": decision.reason,
+                        "gate_ok": ok,
+                    }) + "\n")
+            except Exception:
+                pass
+
+        return out
