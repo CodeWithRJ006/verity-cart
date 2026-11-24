@@ -1,6 +1,7 @@
 """Tests contract conformance between state.view and expected View fixtures."""
 import json
 from pathlib import Path
+
 import pytest
 
 from verity.envelope import Envelope

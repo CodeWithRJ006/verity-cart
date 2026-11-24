@@ -19,14 +19,13 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(REPO_ROOT / "kit"))
-
-import harness
-
 from verity import gate
 from verity.envelope import Envelope
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT / "kit"))
+
+import harness  # noqa: E402
 
 
 @pytest.fixture(scope="module")

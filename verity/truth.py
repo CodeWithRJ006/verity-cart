@@ -1,8 +1,9 @@
 # verity/truth.py — Deterministic stdlib port of kit/harness.check_text.
 # Python 3.9 stdlib only. No imports from kit/.
 from __future__ import annotations
+
 import re
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional
 
 # -----------------------------------------------------------------------------
 # Regex patterns ported verbatim from kit/harness.py

@@ -1,18 +1,16 @@
 # verity/seller.py — Orchestrator (Dev1). Stdlib-only Python 3.9.
 from __future__ import annotations
+
 import json
 import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from .contracts import Action, Decision, Mode, RepairStatus
+from . import gate, parser, renderer, truth
 from .config import Config
-from .registry import load_impl
+from .contracts import Action, Decision, Mode, RepairStatus
 from .envelope import Envelope
-from . import parser
+from .registry import load_impl
 from .state import NegotiationState
-from . import gate
-from . import renderer
-from . import truth
 
 
 class Seller:

@@ -1,7 +1,8 @@
 # verity/parser.py — Robust message parser for buyer inputs. Python 3.9 stdlib only.
 from __future__ import annotations
-from dataclasses import dataclass
+
 import math
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
 
 

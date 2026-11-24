@@ -1,6 +1,7 @@
 # verity/contracts.py — FROZEN after Day 0. Python 3.9, stdlib only.
 from __future__ import annotations
-from dataclasses import dataclass, field
+
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
 

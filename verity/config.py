@@ -1,5 +1,6 @@
 # verity/config.py — owned by Dev2 after I0 bootstrap. Python 3.9 stdlib only.
 from __future__ import annotations
+
 from dataclasses import dataclass, fields
 from typing import Any, Dict
 
