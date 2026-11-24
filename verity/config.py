@@ -20,6 +20,17 @@ class Config:
     r10_close_margin: float = 0.03
     echo_buyer_total: bool = True
     allocator: str = "proportional"
+    accept_require_complete: bool = False
+
+    def __post_init__(self) -> None:
+        if self.partial_bid_policy not in {"matched", "ignore"}:
+            raise ValueError(
+                f"partial_bid_policy must be 'matched' or 'ignore', got {self.partial_bid_policy!r}"
+            )
+        if self.allocator not in {"proportional", "greedy"}:
+            raise ValueError(
+                f"allocator must be 'proportional' or 'greedy', got {self.allocator!r}"
+            )
 
     @classmethod
     def from_switches(cls, s: str) -> Config:
