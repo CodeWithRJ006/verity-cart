@@ -1,10 +1,10 @@
 """Tests robustness, boundary safety, and garbage resistance of verity/parser.py."""
-import math
 import random
 import string
+
 import pytest
 
-from verity.parser import parse, ParsedMsg
+from verity.parser import ParsedMsg, parse
 
 
 def test_parser_table_driven_cases():

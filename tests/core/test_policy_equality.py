@@ -1,14 +1,15 @@
 """Tests exact policy equality and boundary behavior against kit/harness.py."""
 import copy
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Ensure kit is importable for harness verification
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "kit"))
 
-import harness
-from verity.envelope import Envelope
+import harness  # noqa: E402
+
+from verity.envelope import Envelope  # noqa: E402
 
 
 def test_floor_policy_equality_all_100_skus():
