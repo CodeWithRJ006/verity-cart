@@ -2,8 +2,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from verity.envelope import Envelope
 from verity.parser import parse
 from verity.state import NegotiationState
@@ -11,7 +9,6 @@ from verity.state import NegotiationState
 FIXTURES_PATH = Path(__file__).resolve().parent / "view_cases.json"
 
 
-@pytest.mark.xfail(reason="state.py is a temporary I0 stub; full implementation delivered on Thursday (S6)")
 def test_view_cases():
     assert FIXTURES_PATH.exists(), f"Missing fixtures file: {FIXTURES_PATH}"
     with open(FIXTURES_PATH, "r", encoding="utf-8") as f:

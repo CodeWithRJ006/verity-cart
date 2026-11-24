@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from typing import Optional
 
@@ -43,7 +44,10 @@ class Seller:
 
     def start(self, negotiation_id: str) -> None:
         self.negotiation_id = negotiation_id
-        self.state = NegotiationState(self.store, self.policy, self.env)
+        if self.state is None:
+            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env)
+        else:
+            self.state.start(negotiation_id)
         self.last_offer = None
 
     def respond(self, message: dict) -> dict:
@@ -53,22 +57,42 @@ class Seller:
             return self._fallback()
 
     def _fallback(self) -> dict:
-        # Fallback ladder F:
-        # (1) Revalidate last offer vs CURRENT state and schema
+        # Fallback ladder:
+        # (1) Resend the re-validated last offer. Re-validation checks the offer against CURRENT envelope/basket/gate/truth.
         if self.last_offer and self.state and self.state.basket:
-            ok, _ = gate.check_outgoing(self.last_offer, self.state.basket, self.gate_env)
-            if ok:
-                return self.last_offer
-        # (2) Otherwise walk away with plain text
+            try:
+                ok, _ = gate.check_outgoing(self.last_offer, self.state.basket, self.gate_env)
+                items = self.last_offer.get("items")
+                if ok and isinstance(items, list):
+                    total = sum(i["qty"] * i["unit_price"] for i in items)
+                    amounts = {total} | {i["unit_price"] for i in items} | {i["unit_price"] * i["qty"] for i in items}
+                    t_errs = truth.check(self.last_offer.get("text", ""), amounts)
+                    if not t_errs:
+                        return self.last_offer
+            except Exception:
+                pass
+
+        # (2) Plain walk_away message with no literal numbers
+        fallback_text = "I must pass on this deal."
+        try:
+            rendered = renderer.render("walkaway", [], 0, store=self.store)
+            if not truth.check(rendered, set()):
+                fallback_text = rendered
+        except Exception:
+            pass
+
         return {
             "type": "walk_away",
-            "text": renderer.render("walkaway", [], 0, store=self.store),
+            "text": fallback_text,
         }
 
     def _respond(self, message: dict) -> dict:
-        parsed = parser.parse(message)
+        parsed = parser.parse(message, self.store)
         if parsed.type in ("walk_away", "accept"):
             return {"type": "message", "text": "Thank you, goodbye."}
+
+        if self.state is None:
+            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env)
 
         view = self.state.view(parsed)
         if not self.state.basket:
@@ -93,13 +117,48 @@ class Seller:
 
         if decision.action == Action.ACCEPT:
             if gate.bid_valid_as_made(parsed.items, self.state.basket, self.gate_env):
-                return {
+                out = {
                     "type": "accept",
+                    "items": parsed.items,
                     "text": renderer.render("accept", [], 0, store=self.store),
                 }
-            # If invalid as made, convert to counter at floor
-            fr = view.F / view.L if view.L else 1.0
-            decision = Decision(action=Action.COUNTER, total=view.F, mode=Mode.AT_MOST, ratio=fr)
+                ok, _ = gate.check_outgoing(out, self.state.basket, self.gate_env)
+                t_errs = truth.check(out["text"], set())
+                if ok and not t_errs:
+                    return out
+                return self._fallback()
+
+            # If invalid as made, convert to COUNTER at buyer's bid total using Mode.EXACT (or floor if below floor)
+            buyer_total = None
+            if isinstance(parsed.items, list):
+                try:
+                    buyer_total = sum(
+                        int(i["qty"]) * int(i["unit_price"])
+                        for i in parsed.items
+                        if isinstance(i, dict)
+                        and type(i.get("qty")) is int
+                        and type(i.get("unit_price")) in (int, float)
+                        and not isinstance(i.get("unit_price"), bool)
+                        and math.isfinite(i["unit_price"])
+                    )
+                except Exception:
+                    buyer_total = None
+
+            if buyer_total is not None and buyer_total >= view.F:
+                counter_total = min(buyer_total, view.L)
+                target_mode = Mode.EXACT
+            else:
+                counter_total = view.F
+                target_mode = Mode.AT_MOST
+
+            ratio = counter_total / view.L if view.L else 1.0
+            decision = Decision(
+                action=Action.COUNTER,
+                total=counter_total,
+                mode=target_mode,
+                ratio=ratio,
+                reason="invalid_accept_converted_to_counter",
+            )
 
         # Action.COUNTER
         target = decision.total if decision.total is not None else view.L

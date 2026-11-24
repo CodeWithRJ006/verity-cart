@@ -8,7 +8,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Need 1 unit of S001"
         },
         "expected_view": {
@@ -16,7 +22,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -27,16 +35,28 @@
   {
     "id": "case_02_three_skus_qty_gt_1",
     "description": "Request with 3 distinct SKUs, each with qty > 1",
-    "note": "Basket={S001: 2, S002: 2, S004: 3}. L = 2*1000 + 2*1200 + 3*500 = 2000 + 2400 + 1500 = 5900. F = 2*858 + 2*1000 + 3*429 = 1716 + 2000 + 1287 = 5003. Buyer bid = 2*950 + 2*1100 + 3*450 = 1900 + 2200 + 1350 = 5450. Ratio r = 5450/5900 = 0.923728813559322.",
+    "note": "Basket={S001: 2, S002: 2, S004: 3}. L = 2*1000 + 2*1200 + 3*500 = 2000 + 2400 + 1500 = 5900. F = 2*858 + 2*1001 + 3*429 = 1716 + 2002 + 1287 = 5005. Buyer bid = 2*950 + 2*1100 + 3*450 = 1900 + 2200 + 1350 = 5450. Ratio r = 5450/5900 = 0.923728813559322.",
     "turns": [
       {
         "incoming": {
           "type": "request",
           "round": 1,
           "items": [
-            {"sku": "S001", "qty": 2, "unit_price": 950},
-            {"sku": "S002", "qty": 2, "unit_price": 1100},
-            {"sku": "S004", "qty": 3, "unit_price": 450}
+            {
+              "sku": "S001",
+              "qty": 2,
+              "unit_price": 950
+            },
+            {
+              "sku": "S002",
+              "qty": 2,
+              "unit_price": 1100
+            },
+            {
+              "sku": "S004",
+              "qty": 3,
+              "unit_price": 450
+            }
           ],
           "text": "Bundle of 3 items"
         },
@@ -44,8 +64,10 @@
           "round": 1,
           "msg_type": "request",
           "L": 5900,
-          "F": 5003,
-          "bids": [0.923728813559322],
+          "F": 5005,
+          "bids": [
+            0.923728813559322
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -63,8 +85,16 @@
           "type": "request",
           "round": 1,
           "items": [
-            {"sku": "S001", "qty": 1, "unit_price": 900},
-            {"sku": "S003", "qty": 1, "unit_price": 700}
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            },
+            {
+              "sku": "S003",
+              "qty": 1,
+              "unit_price": 700
+            }
           ],
           "text": "Requesting in-stock and out-of-stock items"
         },
@@ -84,20 +114,26 @@
   {
     "id": "case_04_request_qty_capped_at_stock",
     "description": "Request qty above stock is capped at available stock",
-    "note": "S002 stock is 5; request qty is 8 -> capped at 5. Basket={S002: 5}. L = 5*1200 = 6000. F = 5*1000 = 5000. Turn 1: buyer qty 8 != basket qty 5 -> bid_complete=False. Turn 2: buyer counters with qty 5 at 1100. Total = 5*1100 = 5500. r = 5500/6000 = 0.9166666666666666.",
+    "note": "Wanted S002 qty=8, but stock(S002)=5 -> capped to 5. Basket={S002: 5}. L = 5*1200 = 6000. F = 5*1001 = 5005. Buyer bid = 5*1100 = 5500. r = 5500/6000 = 0.9166666666666666.",
     "turns": [
       {
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S002", "qty": 8, "unit_price": 1100}],
+          "items": [
+            {
+              "sku": "S002",
+              "qty": 8,
+              "unit_price": 1100
+            }
+          ],
           "text": "I want 8 of S002"
         },
         "expected_view": {
           "round": 1,
           "msg_type": "request",
           "L": 6000,
-          "F": 5000,
+          "F": 5005,
           "bids": [],
           "bid_complete": false,
           "bid_valid_as_made": false,
@@ -108,15 +144,23 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S002", "qty": 5, "unit_price": 1100}],
+          "items": [
+            {
+              "sku": "S002",
+              "qty": 5,
+              "unit_price": 1100
+            }
+          ],
           "text": "Ok, 5 of S002 at 1100"
         },
         "expected_view": {
           "round": 2,
           "msg_type": "counter",
           "L": 6000,
-          "F": 5000,
-          "bids": [0.9166666666666666],
+          "F": 5005,
+          "bids": [
+            0.9166666666666666
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -133,7 +177,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 1000}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 1000
+            }
+          ],
           "text": "Offering list price"
         },
         "expected_view": {
@@ -141,7 +191,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [1.0],
+          "bids": [
+            1.0
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -158,7 +210,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 858}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 858
+            }
+          ],
           "text": "Offering exact floor price"
         },
         "expected_view": {
@@ -166,7 +224,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.858],
+          "bids": [
+            0.858
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -183,7 +243,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 800}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 800
+            }
+          ],
           "text": "Lowball opening bid"
         },
         "expected_view": {
@@ -191,7 +257,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.8],
+          "bids": [
+            0.8
+          ],
           "bid_complete": true,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -202,15 +270,23 @@
   {
     "id": "case_08_partial_bid_missing_sku",
     "description": "Partial bid missing a basket SKU: bid_complete False, not appended to bids",
-    "note": "Turn 1 sets basket={S001: 1, S002: 1}. L = 1000 + 1200 = 2200. F = 858 + 1000 = 1858. Turn 1 bid = 900 + 1100 = 2000. r = 2000/2200 = 0.9090909090909091. Turn 2: buyer only bids on S001 (missing S002). bid_complete=False, bids remains [0.9090909090909091].",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200. F = 858 + 1001 = 1859. Turn 1 bids only S001 -> partial bid -> bid_complete=False, bids=[].",
     "turns": [
       {
         "incoming": {
           "type": "request",
           "round": 1,
           "items": [
-            {"sku": "S001", "qty": 1, "unit_price": 900},
-            {"sku": "S002", "qty": 1, "unit_price": 1100}
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            },
+            {
+              "sku": "S002",
+              "qty": 1,
+              "unit_price": 1100
+            }
           ],
           "text": "Open with both"
         },
@@ -218,8 +294,10 @@
           "round": 1,
           "msg_type": "request",
           "L": 2200,
-          "F": 1858,
-          "bids": [0.9090909090909091],
+          "F": 1859,
+          "bids": [
+            0.9090909090909091
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -229,15 +307,23 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 950}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 950
+            }
+          ],
           "text": "Only bidding on S001 now"
         },
         "expected_view": {
           "round": 2,
           "msg_type": "counter",
           "L": 2200,
-          "F": 1858,
-          "bids": [0.9090909090909091],
+          "F": 1859,
+          "bids": [
+            0.9090909090909091
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -254,7 +340,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open S001"
         },
         "expected_view": {
@@ -262,7 +354,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -273,8 +367,16 @@
           "type": "counter",
           "round": 2,
           "items": [
-            {"sku": "S001", "qty": 1, "unit_price": 920},
-            {"sku": "S002", "qty": 1, "unit_price": 1100}
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 920
+            },
+            {
+              "sku": "S002",
+              "qty": 1,
+              "unit_price": 1100
+            }
           ],
           "text": "Throwing in S002"
         },
@@ -283,7 +385,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -300,7 +404,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 2, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 2,
+              "unit_price": 900
+            }
+          ],
           "text": "Open 2 of S001"
         },
         "expected_view": {
@@ -308,7 +418,9 @@
           "msg_type": "request",
           "L": 2000,
           "F": 1716,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -318,7 +430,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 920}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 920
+            }
+          ],
           "text": "Wrong qty"
         },
         "expected_view": {
@@ -326,7 +444,9 @@
           "msg_type": "counter",
           "L": 2000,
           "F": 1716,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -343,7 +463,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 2, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 2,
+              "unit_price": 900
+            }
+          ],
           "text": "Open 2"
         },
         "expected_view": {
@@ -351,7 +477,9 @@
           "msg_type": "request",
           "L": 2000,
           "F": 1716,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -362,8 +490,16 @@
           "type": "counter",
           "round": 2,
           "items": [
-            {"sku": "S001", "qty": 1, "unit_price": 900},
-            {"sku": "S001", "qty": 1, "unit_price": 950}
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            },
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 950
+            }
           ],
           "text": "Duplicate lines"
         },
@@ -372,7 +508,9 @@
           "msg_type": "counter",
           "L": 2000,
           "F": 1716,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -389,7 +527,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -397,7 +541,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -407,7 +553,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": true}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": true
+            }
+          ],
           "text": "Bool price"
         },
         "expected_view": {
@@ -415,7 +567,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -432,7 +586,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -440,7 +600,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -450,7 +612,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": null}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": null
+            }
+          ],
           "text": "Null price"
         },
         "expected_view": {
@@ -458,7 +626,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -475,7 +645,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -483,7 +659,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -493,7 +671,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": "Infinity"}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": "Infinity"
+            }
+          ],
           "text": "Infinity price"
         },
         "expected_view": {
@@ -501,7 +685,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -518,7 +704,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -526,7 +718,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -536,7 +730,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": -500}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": -500
+            }
+          ],
           "text": "Negative price"
         },
         "expected_view": {
@@ -544,7 +744,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -561,7 +763,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -569,7 +777,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -579,7 +789,13 @@
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": "900"}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": "900"
+            }
+          ],
           "text": "String price"
         },
         "expected_view": {
@@ -587,7 +803,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -604,7 +822,12 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1
+            }
+          ],
           "text": "How much for S001?"
         },
         "expected_view": {
@@ -629,7 +852,13 @@
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
           "text": "Open"
         },
         "expected_view": {
@@ -637,7 +866,9 @@
           "msg_type": "request",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": true,
           "bid_valid_as_made": true,
           "last_offer_ratio": null
@@ -655,7 +886,9 @@
           "msg_type": "counter",
           "L": 1000,
           "F": 858,
-          "bids": [0.9],
+          "bids": [
+            0.9
+          ],
           "bid_complete": false,
           "bid_valid_as_made": false,
           "last_offer_ratio": null
@@ -669,54 +902,210 @@
     "note": "Basket={S001: 1}. L = 1000, F = 858. Turn 1: bid 860, r1 = 860/1000 = 0.86. Turn 2: bid 900, r2 = 0.90. Turn 3: bid 940, r3 = 0.94. Turn 4: bid 980, r4 = 0.98. Bids list grows strictly in sequence: [0.86, 0.90, 0.94, 0.98].",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1, "unit_price": 860}], "text": "R1"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [0.86], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 860
+            }
+          ],
+          "text": "R1"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 2, "items": [{"sku": "S001", "qty": 1, "unit_price": 900}], "text": "R2"},
-        "expected_view": {"round": 2, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.86, 0.9], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
+          "text": "R2"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86,
+            0.9
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 3, "items": [{"sku": "S001", "qty": 1, "unit_price": 940}], "text": "R3"},
-        "expected_view": {"round": 3, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.86, 0.9, 0.94], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "counter",
+          "round": 3,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 940
+            }
+          ],
+          "text": "R3"
+        },
+        "expected_view": {
+          "round": 3,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86,
+            0.9,
+            0.94
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 4, "items": [{"sku": "S001", "qty": 1, "unit_price": 980}], "text": "R4"},
-        "expected_view": {"round": 4, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.86, 0.9, 0.94, 0.98], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "counter",
+          "round": 4,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 980
+            }
+          ],
+          "text": "R4"
+        },
+        "expected_view": {
+          "round": 4,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86,
+            0.9,
+            0.94,
+            0.98
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
   {
     "id": "case_20_partial_bid_between_two_complete_bids",
     "description": "A partial bid in turn 2 is excluded, followed by a valid complete bid in turn 3",
-    "note": "Basket={S001: 1, S002: 1}. L = 2200, F = 1858. Turn 1: 900 + 1000 = 1900. r1 = 1900/2200 = 0.8636363636363636. Turn 2: partial bid (missing S002) -> bids remains [0.8636363636363636]. Turn 3: 950 + 1050 = 2000. r3 = 2000/2200 = 0.9090909090909091. bids=[0.8636363636363636, 0.9090909090909091].",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200, F = 1859. Turn 1: 900 + 1050 = 1950. r1 = 1950/2200 = 0.8863636363636364. Turn 2: partial bid (missing S002) -> bids remains [0.8863636363636364]. Turn 3: 950 + 1050 = 2000. r3 = 2000/2200 = 0.9090909090909091. bids=[0.8863636363636364, 0.9090909090909091].",
     "turns": [
       {
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 900}, {"sku": "S002", "qty": 1, "unit_price": 1000}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            },
+            {
+              "sku": "S002",
+              "qty": 1,
+              "unit_price": 1050
+            }
+          ],
           "text": "Turn 1"
         },
-        "expected_view": {"round": 1, "msg_type": "request", "L": 2200, "F": 1858, "bids": [0.8636363636363636], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [
+            0.8863636363636364
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 920}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 920
+            }
+          ],
           "text": "Turn 2 partial"
         },
-        "expected_view": {"round": 2, "msg_type": "counter", "L": 2200, "F": 1858, "bids": [0.8636363636363636], "bid_complete": false, "bid_valid_as_made": false, "last_offer_ratio": null}
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [
+            0.8863636363636364
+          ],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
       },
       {
         "incoming": {
           "type": "counter",
           "round": 3,
-          "items": [{"sku": "S001", "qty": 1, "unit_price": 950}, {"sku": "S002", "qty": 1, "unit_price": 1050}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 950
+            },
+            {
+              "sku": "S002",
+              "qty": 1,
+              "unit_price": 1050
+            }
+          ],
           "text": "Turn 3 complete"
         },
-        "expected_view": {"round": 3, "msg_type": "counter", "L": 2200, "F": 1858, "bids": [0.8636363636363636, 0.9090909090909091], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "expected_view": {
+          "round": 3,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [
+            0.8863636363636364,
+            0.9090909090909091
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
@@ -726,12 +1115,57 @@
     "note": "Basket={S001: 1}. L = 1000, F = 858. Round 10 incoming counter with price 950. r = 950/1000 = 0.95. View.round = 10.",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1, "unit_price": 860}], "text": "R1"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [0.86], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 860
+            }
+          ],
+          "text": "R1"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 10, "items": [{"sku": "S001", "qty": 1, "unit_price": 950}], "text": "Final round counter"},
-        "expected_view": {"round": 10, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.86, 0.95], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "counter",
+          "round": 10,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 950
+            }
+          ],
+          "text": "Final round counter"
+        },
+        "expected_view": {
+          "round": 10,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.86,
+            0.95
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
@@ -741,12 +1175,49 @@
     "note": "Basket={S001: 1}. Turn 2 has type: 'accept'. Buyer message is not an offer/bid -> bid_complete=False, bid_valid_as_made=False, bids=[0.9]. View.msg_type = 'accept'.",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1, "unit_price": 900}], "text": "Open"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [0.9], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
+          "text": "Open"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "accept", "round": 2, "text": "Deal, thank you!"},
-        "expected_view": {"round": 2, "msg_type": "accept", "L": 1000, "F": 858, "bids": [0.9], "bid_complete": false, "bid_valid_as_made": false, "last_offer_ratio": null}
+        "incoming": {
+          "type": "accept",
+          "round": 2,
+          "text": "Deal, thank you!"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "accept",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9
+          ],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
@@ -756,37 +1227,118 @@
     "note": "Basket={S001: 1}. Turn 2 has type: 'walk_away'. Buyer terminates -> bid_complete=False, bid_valid_as_made=False, bids=[0.9]. View.msg_type = 'walk_away'.",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1, "unit_price": 900}], "text": "Open"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [0.9], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
+          "text": "Open"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "walk_away", "round": 2, "text": "Price too high, bye"},
-        "expected_view": {"round": 2, "msg_type": "walk_away", "L": 1000, "F": 858, "bids": [0.9], "bid_complete": false, "bid_valid_as_made": false, "last_offer_ratio": null}
+        "incoming": {
+          "type": "walk_away",
+          "round": 2,
+          "text": "Price too high, bye"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "walk_away",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9
+          ],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
   {
     "id": "case_24_multi_sku_quantities_partial_match",
     "description": "Multi-SKU bundle where second turn changes quantity of one SKU",
-    "note": "Basket={S001: 3, S002: 2}. L = 3*1000 + 2*1200 = 5400. F = 3*858 + 2*1000 = 4574. Turn 1 bid = 3*900 + 2*1100 = 4900. r = 4900/5400 = 0.9074074074074074. Turn 2 bids S002 qty=1 (basket expected 2) -> bid_complete=False.",
+    "note": "Basket={S001: 3, S002: 2}. L = 3*1000 + 2*1200 = 5400. F = 3*858 + 2*1001 = 4576. Turn 1 bid = 3*900 + 2*1100 = 4900. r = 4900/5400 = 0.9074074074074074. Turn 2 bids S002 qty=1 (basket expected 2) -> bid_complete=False.",
     "turns": [
       {
         "incoming": {
           "type": "request",
           "round": 1,
-          "items": [{"sku": "S001", "qty": 3, "unit_price": 900}, {"sku": "S002", "qty": 2, "unit_price": 1100}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 3,
+              "unit_price": 900
+            },
+            {
+              "sku": "S002",
+              "qty": 2,
+              "unit_price": 1100
+            }
+          ],
           "text": "Bundle 3 and 2"
         },
-        "expected_view": {"round": 1, "msg_type": "request", "L": 5400, "F": 4574, "bids": [0.9074074074074074], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 5400,
+          "F": 4576,
+          "bids": [
+            0.9074074074074074
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       },
       {
         "incoming": {
           "type": "counter",
           "round": 2,
-          "items": [{"sku": "S001", "qty": 3, "unit_price": 900}, {"sku": "S002", "qty": 1, "unit_price": 1100}],
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 3,
+              "unit_price": 900
+            },
+            {
+              "sku": "S002",
+              "qty": 1,
+              "unit_price": 1100
+            }
+          ],
           "text": "Changed S002 qty"
         },
-        "expected_view": {"round": 2, "msg_type": "counter", "L": 5400, "F": 4574, "bids": [0.9074074074074074], "bid_complete": false, "bid_valid_as_made": false, "last_offer_ratio": null}
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 5400,
+          "F": 4576,
+          "bids": [
+            0.9074074074074074
+          ],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
@@ -796,12 +1348,53 @@
     "note": "Basket={S001: 1}. L = 1000, F = 858. Turn 1 is unpriced request: bid_complete=False, bids=[]. Turn 2 is priced counter at 920: r = 920/1000 = 0.92. bid_complete=True, bids=[0.92].",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1}], "text": "Price inquiry"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [], "bid_complete": false, "bid_valid_as_made": false, "last_offer_ratio": null}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1
+            }
+          ],
+          "text": "Price inquiry"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 2, "items": [{"sku": "S001", "qty": 1, "unit_price": 920}], "text": "Offer 920"},
-        "expected_view": {"round": 2, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.92], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null}
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 920
+            }
+          ],
+          "text": "Offer 920"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.92
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
       }
     ]
   },
@@ -811,13 +1404,68 @@
     "note": "Basket={S001: 1}. L = 1000, F = 858. Turn 1 last_offer_ratio=None. State remembers seller offer of total 950 (ratio 950/1000 = 0.95). Turn 2 incoming counter reflects last_offer_ratio=0.95.",
     "turns": [
       {
-        "incoming": {"type": "request", "round": 1, "items": [{"sku": "S001", "qty": 1, "unit_price": 900}], "text": "R1"},
-        "expected_view": {"round": 1, "msg_type": "request", "L": 1000, "F": 858, "bids": [0.9], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": null},
-        "remember": {"type": "offer", "items": [{"sku": "S001", "qty": 1, "unit_price": 950}], "text": "Offer 950"}
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 900
+            }
+          ],
+          "text": "R1"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        },
+        "remember": {
+          "type": "offer",
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 950
+            }
+          ],
+          "text": "Offer 950"
+        }
       },
       {
-        "incoming": {"type": "counter", "round": 2, "items": [{"sku": "S001", "qty": 1, "unit_price": 920}], "text": "R2"},
-        "expected_view": {"round": 2, "msg_type": "counter", "L": 1000, "F": 858, "bids": [0.9, 0.92], "bid_complete": true, "bid_valid_as_made": true, "last_offer_ratio": 0.95}
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {
+              "sku": "S001",
+              "qty": 1,
+              "unit_price": 920
+            }
+          ],
+          "text": "R2"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [
+            0.9,
+            0.92
+          ],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": 0.95
+        }
       }
     ]
   }
