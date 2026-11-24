@@ -16,6 +16,7 @@ class Envelope:
     """
 
     def __init__(self, store: Dict[str, Any], policy: Dict[str, Any]):
+        self._live_store = store
         self._store = copy.deepcopy(store)
         self._policy = copy.deepcopy(policy)
         self._floors: Dict[str, int] = {}
@@ -44,8 +45,8 @@ class Envelope:
         return self._list_prices[sku]
 
     def stock(self, sku: str, current_store: Optional[Dict[str, Any]] = None) -> int:
-        """Available stock units. Re-reads from current_store if passed."""
-        source = current_store if current_store is not None else self._store
+        """Available stock units. Re-reads from current_store or live store."""
+        source = current_store if current_store is not None else getattr(self, "_live_store", self._store)
         if sku not in source:
             raise KeyError(f"Unknown SKU: {sku!r}")
         return int(source[sku]["stock"])

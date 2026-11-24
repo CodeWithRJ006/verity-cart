@@ -1,67 +1,142 @@
-# verity/state.py — TEMPORARY I0 placeholder. Replaced by Dev1 in S6.
-from typing import Dict, List, Optional
+# verity/state.py — State tracker and View builder (Dev1).
+# Python 3.9 stdlib only. No imports from strategy, repair, or renderer.
+from __future__ import annotations
+
+import math
+from typing import Any, Dict, List, Optional
 
 from . import gate
 from .contracts import Basket, View
+from .envelope import Envelope
+from .parser import ParsedMsg, parse
 
 
 class NegotiationState:
-    def __init__(self, store, policy, env):
+    """Tracks negotiation history and constructs View dataclasses for strategy.
+
+    Invariants:
+    - Independent state per negotiation; reset completely via start().
+    - Basket fixed on first request from available stock; out-of-stock items recorded in dropped.
+    - Bid history records ratios of complete bids only.
+    - Free text is never parsed or propagated into View.
+    """
+
+    def __init__(
+        self,
+        store: Dict[str, Any],
+        policy: Dict[str, Any],
+        env: Any,
+        gate_env: Optional[Any] = None,
+    ) -> None:
         self.store = store
         self.policy = policy
         self.env = env
+        self.gate_env = gate_env if gate_env is not None else Envelope(store, policy)
         self.basket: Optional[Basket] = None
         self.dropped: List[str] = []
         self.bids: List[float] = []
         self.last_offer_ratio: Optional[float] = None
+        self.turn: int = 0
+        self.negotiation_id: Optional[str] = None
+
+    def start(self, negotiation_id: Optional[str] = None) -> None:
+        """Reset all state for a new negotiation session."""
+        self.negotiation_id = negotiation_id
+        self.basket = None
+        self.dropped = []
+        self.bids = []
+        self.last_offer_ratio = None
         self.turn = 0
 
-    def begin(self, msg) -> None:
+    def begin(self, msg: Any) -> None:
+        """Fix basket and dropped items from first buyer message."""
         self.turn = 1
         wanted: Dict[str, int] = {}
-        items = msg.items if hasattr(msg, "items") else msg.get("items")
+        items = msg.items if hasattr(msg, "items") else (msg.get("items") if isinstance(msg, dict) else None)
         for it in items or []:
             if isinstance(it, dict):
                 sku = it.get("sku")
                 qty = it.get("qty")
-                if sku in self.store and isinstance(qty, int) and not isinstance(qty, bool) and qty > 0:
+                if (
+                    isinstance(sku, str)
+                    and sku in self.store
+                    and type(qty) is int
+                    and not isinstance(qty, bool)
+                    and qty > 0
+                ):
                     wanted[sku] = wanted.get(sku, 0) + qty
-        self.basket = {
-            s: min(q, self.env.stock(s))
-            for s, q in wanted.items()
-            if self.env.stock(s) > 0
-        }
-        self.dropped = [s for s, q in wanted.items() if self.env.stock(s) == 0]
 
-    def view(self, parsed) -> View:
-        self.turn = parsed.round if parsed.round is not None else self.turn + 1
+        self.basket = {}
+        self.dropped = []
+        for s, q in wanted.items():
+            avail = self.env.stock(s, self.store) if hasattr(self.env, "stock") else self.store[s]["stock"]
+            if avail > 0:
+                self.basket[s] = min(q, avail)
+            else:
+                self.dropped.append(s)
+
+    def view(self, parsed: Any) -> View:
+        """Build View dataclass for the current turn."""
+        if not isinstance(parsed, ParsedMsg):
+            parsed = parse(parsed, self.store)
+
+        # Round tracking: prefer valid msg round, else internal counter
+        self.turn += 1
+        has_valid_round = (
+            type(parsed.round) is int
+            and not isinstance(parsed.round, bool)
+            and parsed.round >= 1
+            and "missing_round" not in parsed.flags
+            and "bad_round" not in parsed.flags
+        )
+        if has_valid_round:
+            effective_round = parsed.round
+            self.turn = parsed.round
+        else:
+            effective_round = self.turn
+
         if self.basket is None:
             self.begin(parsed)
+
         L = sum(q * self.env.list_price(k) for k, q in self.basket.items()) if self.basket else 0
         F = sum(q * self.env.floor(k) for k, q in self.basket.items()) if self.basket else 0
 
         # Check buyer items
         items = parsed.items
         bid_complete = False
-        bid_valid = False
         if isinstance(items, list) and self.basket:
-            seen_skus = {}
+            seen_skus: set[str] = set()
+            valid_items = True
+            total_bid = 0.0
             for it in items:
-                if isinstance(it, dict):
-                    s, q, pr = it.get("sku"), it.get("qty"), it.get("unit_price")
-                    if s in self.basket and isinstance(q, int) and not isinstance(q, bool) and q == self.basket[s]:
-                        if isinstance(pr, (int, float)) and not isinstance(pr, bool):
-                            seen_skus[s] = (q, pr)
-            if len(seen_skus) == len(self.basket) and len(items) == len(self.basket):
+                if not isinstance(it, dict):
+                    valid_items = False
+                    break
+                s = it.get("sku")
+                q = it.get("qty")
+                p = it.get("unit_price")
+                if not isinstance(s, str) or s not in self.basket or s in seen_skus:
+                    valid_items = False
+                    break
+                seen_skus.add(s)
+                if type(q) is not int or q != self.basket[s]:
+                    valid_items = False
+                    break
+                if type(p) not in (int, float) or isinstance(p, bool) or not math.isfinite(p):
+                    valid_items = False
+                    break
+                total_bid += q * p
+
+            if valid_items and seen_skus == set(self.basket.keys()):
                 bid_complete = True
-                bid_total = sum(q * p for q, p in seen_skus.values())
                 if L > 0:
-                    ratio = bid_total / L
+                    ratio = total_bid / L
                     self.bids.append(ratio)
-            bid_valid = gate.bid_valid_as_made(items, self.basket, self.env)
+
+        bid_valid = gate.bid_valid_as_made(items, self.basket, self.gate_env)
 
         return View(
-            round=self.turn,
+            round=effective_round,
             msg_type=parsed.type,
             L=L,
             F=F,
@@ -72,9 +147,19 @@ class NegotiationState:
         )
 
     def remember(self, offer: dict) -> None:
+        """Record seller's own outgoing offer ratio."""
+        if not isinstance(offer, dict) or offer.get("type") != "offer":
+            return
         items = offer.get("items")
         if isinstance(items, list) and self.basket:
-            total = sum(i["qty"] * i["unit_price"] for i in items if isinstance(i, dict) and "qty" in i and "unit_price" in i)
+            total = sum(
+                i["qty"] * i["unit_price"]
+                for i in items
+                if isinstance(i, dict)
+                and type(i.get("qty")) is int
+                and type(i.get("unit_price")) in (int, float)
+                and not isinstance(i.get("unit_price"), bool)
+            )
             L = sum(q * self.env.list_price(k) for k, q in self.basket.items())
             if L > 0:
                 self.last_offer_ratio = total / L
