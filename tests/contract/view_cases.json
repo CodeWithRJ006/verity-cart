@@ -1,0 +1,24 @@
+[
+  {
+    "id": "case_01_standard_open",
+    "description": "Standard 2-item opening request with valid stock and prices",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 2, "unit_price": 500},
+            {"sku": "S002", "qty": 1, "unit_price": 800}
+          ],
+          "text": "Hello, I want these items."
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "bid_complete": true
+        }
+      }
+    ]
+  }
+]
