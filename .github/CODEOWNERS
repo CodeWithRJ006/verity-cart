@@ -1,27 +1,27 @@
 *                          @CodeWithRJ006
-/verity/contracts.py       @CodeWithRJ006
-/AGENTS.md                 @CodeWithRJ006
-/verity/gate.py            @CodeWithRJ006
-/verity/truth.py           @CodeWithRJ006
-/verity/renderer.py        @CodeWithRJ006
+/verity/contracts.py       @CodeWithRJ006 @Asmi611 @akshata-malik
+/AGENTS.md                 @CodeWithRJ006 @Asmi611 @akshata-malik
+/verity/gate.py            @CodeWithRJ006 @akshata-malik
+/verity/truth.py           @CodeWithRJ006 @akshata-malik
+/verity/renderer.py        @CodeWithRJ006 @akshata-malik
 /verity/parser.py          @CodeWithRJ006
 /verity/envelope.py        @CodeWithRJ006
 /verity/state.py           @CodeWithRJ006
-/verity/seller.py          @CodeWithRJ006
-/verity/strategy.py        @CodeWithRJ006
-/verity/repair.py          @CodeWithRJ006
-/verity/config.py          @CodeWithRJ006
-/experiments/              @CodeWithRJ006
-/arena/                    @CodeWithRJ006
-/results/                  @CodeWithRJ006
-/submission/               @CodeWithRJ006
-/tests/arena/              @CodeWithRJ006
-/tests/strategy/           @CodeWithRJ006
+/verity/seller.py          @CodeWithRJ006 @Asmi611
+/verity/strategy.py        @Asmi611
+/verity/repair.py          @Asmi611
+/verity/config.py          @Asmi611
+/experiments/              @Asmi611
+/arena/                    @akshata-malik
+/results/                  @akshata-malik
+/submission/               @akshata-malik @Asmi611
+/tests/arena/              @akshata-malik
+/tests/strategy/           @Asmi611
 /tests/core/               @CodeWithRJ006
 /kit/                      @CodeWithRJ006
 /verity/registry.py        @CodeWithRJ006
 /verity/strategy_stub.py   @CodeWithRJ006
 /verity/repair_stub.py     @CodeWithRJ006
 /verity/legacy_spike.py    @CodeWithRJ006
-/verity/strategy_baseline.py @CodeWithRJ006
-/tests/contract/           @CodeWithRJ006
+/verity/strategy_baseline.py @Asmi611
+/tests/contract/           @CodeWithRJ006 @Asmi611
