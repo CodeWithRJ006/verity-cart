@@ -1,0 +1,16 @@
+﻿seller              ../seller_verity.py
+negotiations        210   (162 where a compliant deal existed)
+deal rate           0.771   where possible 1.000
+margin kept         0.669   (share of list-price profit, on deals)
+value               0.516   (deal rate and margin together)
+policy violations   0
+truth violations    0
+deadlocks           18   (walked away: seller 18, buyer 12)
+rounds              7.3 on average
+latency             0.06 ms/turn, p95 0.09 ms
+SCORE               49.5
+
+by buyer                n   deals  margin  value  policy  truth  deadlocks  score
+  cooperative            70   0.89   0.83   0.74       0      0         0    73.7
+  hard_bargainer         70   0.73   0.59   0.43       0      0         3    41.8
+  manipulator            70   0.70   0.55   0.38       0      0        15    33.0
