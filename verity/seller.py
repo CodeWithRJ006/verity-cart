@@ -117,13 +117,20 @@ class Seller:
             for k, q in self.state.basket.items()
         ]
         total = sum(i["qty"] * i["unit_price"] for i in items)
-        text = renderer.render("counter", items, total, self.state.dropped, store=self.store)
+        template_kind = "open" if view.round == 1 else "counter"
+        text = renderer.render(template_kind, items, total, self.state.dropped, store=self.store)
         out = {"type": "offer", "items": items, "text": text}
 
         # Gate check
         ok, reasons = gate.check_outgoing(out, self.state.basket, self.env)
-        # Truth check
-        t_errs = truth.check(out["text"])
+        # Truth check: numbers in play for this offer
+        amounts = {total} | {i["unit_price"] for i in items} | {i["unit_price"] * i["qty"] for i in items}
+        t_errs = truth.check(out["text"], amounts)
+        if t_errs:
+            # Fallback template
+            out["text"] = renderer.render("plain_fallback", items, total, self.state.dropped, store=self.store)
+            t_errs = truth.check(out["text"], amounts)
+
         if not ok or t_errs:
             return self._fallback()
 
