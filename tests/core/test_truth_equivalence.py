@@ -1,22 +1,22 @@
 """Equivalence test: asserts truth.check and harness.check_text produce identical flags."""
-from pathlib import Path
 import random
 import string
 import sys
-import pytest
+from pathlib import Path
+
+from verity import truth
 
 # Ensure kit is importable for harness verification
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "kit"))
 
-import harness
-from verity import truth
+import harness  # noqa: E402
 
 
 def test_truth_equivalence_50000_strings():
     rng = random.Random(1337)
     store = harness.load_store()
-    policy = harness.load_policy()
+    _ = harness.load_policy()
 
     sample_skus = list(store.keys())[:10]
 

@@ -1,14 +1,14 @@
 """Tests that all renderer templates produce 0 truth flags across 20,000 random offers."""
-from pathlib import Path
 import random
 import sys
-import pytest
+from pathlib import Path
+
+from verity import renderer, truth
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "kit"))
 
-import harness
-from verity import renderer, truth
+import harness  # noqa: E402
 
 
 def test_renderer_clean_20000_offers():

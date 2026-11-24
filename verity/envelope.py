@@ -1,5 +1,6 @@
 # verity/envelope.py — Price and stock bounds per SKU. Python 3.9 stdlib only.
 from __future__ import annotations
+
 import copy
 import math
 from typing import Any, Dict, Optional

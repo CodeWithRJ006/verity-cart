@@ -1,7 +1,8 @@
 # verity/state.py — TEMPORARY I0 placeholder. Replaced by Dev1 in S6.
 from typing import Dict, List, Optional
-from .contracts import Basket, View
+
 from . import gate
+from .contracts import Basket, View
 
 
 class NegotiationState:

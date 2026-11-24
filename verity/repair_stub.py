@@ -1,5 +1,5 @@
 """Dev1 stand-in repair double. Invariant: prices in [floor, list]; sum <= target (at-most) or == total (exact)."""
-from .contracts import Prices, RepairResult, RepairStatus
+from .contracts import RepairResult, RepairStatus
 
 
 def allocate_at_most(basket, env, target: int) -> RepairResult:

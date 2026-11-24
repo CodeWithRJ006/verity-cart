@@ -1,6 +1,7 @@
 # verity/renderer.py — Fixed truthful templates for outgoing seller messages.
 # Python 3.9 stdlib only.
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional
 
 
