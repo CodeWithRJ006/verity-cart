@@ -1,0 +1,29 @@
+{
+ "git_sha": "290bbc6",
+ "label": "spike",
+ "seller": "seller_spike.py",
+ "impl": null,
+ "switches": {},
+ "seeds": [
+  0
+ ],
+ "per_seed": {
+  "0": {
+   "score": 51.9,
+   "deal_rate": 0.771,
+   "margin_kept": 0.674,
+   "value_per_negotiation": 0.52,
+   "policy": 0,
+   "truth": 0,
+   "deadlocks": 1,
+   "n_negotiations": 210,
+   "by_buyer": {
+    "cooperative": 74.8,
+    "hard_bargainer": 42.9,
+    "manipulator": 38.0
+   }
+  }
+ },
+ "round10": [],
+ "n_negotiations": 210
+}
