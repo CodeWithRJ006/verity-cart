@@ -20,6 +20,7 @@ class Seller:
         self.store = store
         self.policy = policy
         self.env = Envelope(store, policy)
+        self.gate_env = Envelope(store, policy)
 
         # VERITY_SWITCHES: unknown key raises at construction
         switches_str = os.environ.get("VERITY_SWITCHES", "")
@@ -57,7 +58,7 @@ class Seller:
         # Fallback ladder F:
         # (1) Revalidate last offer vs CURRENT state and schema
         if self.last_offer and self.state and self.state.basket:
-            ok, _ = gate.check_outgoing(self.last_offer, self.state.basket, self.env)
+            ok, _ = gate.check_outgoing(self.last_offer, self.state.basket, self.gate_env)
             if ok:
                 return self.last_offer
         # (2) Otherwise walk away with plain text
@@ -93,7 +94,7 @@ class Seller:
             }
 
         if decision.action == Action.ACCEPT:
-            if gate.bid_valid_as_made(parsed.items, self.state.basket, self.env):
+            if gate.bid_valid_as_made(parsed.items, self.state.basket, self.gate_env):
                 return {
                     "type": "accept",
                     "text": renderer.render("accept", [], 0, store=self.store),
@@ -122,7 +123,7 @@ class Seller:
         out = {"type": "offer", "items": items, "text": text}
 
         # Gate check
-        ok, reasons = gate.check_outgoing(out, self.state.basket, self.env)
+        ok, reasons = gate.check_outgoing(out, self.state.basket, self.gate_env)
         # Truth check: numbers in play for this offer
         amounts = {total} | {i["unit_price"] for i in items} | {i["unit_price"] * i["qty"] for i in items}
         t_errs = truth.check(out["text"], amounts)
@@ -130,7 +131,6 @@ class Seller:
             # Fallback template
             out["text"] = renderer.render("plain_fallback", items, total, self.state.dropped, store=self.store)
             t_errs = truth.check(out["text"], amounts)
-
         if not ok or t_errs:
             return self._fallback()
 
