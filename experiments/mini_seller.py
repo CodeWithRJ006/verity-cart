@@ -49,6 +49,7 @@ class MiniSeller:
         policy: dict,
         cfg: Optional[Config] = None,
         echo_alloc: str = "at_most",
+        accept_semantics: str = "spike",
     ) -> None:
         if echo_alloc not in ("at_most", "exact"):
             raise ValueError(
@@ -58,6 +59,7 @@ class MiniSeller:
         self.policy = policy
         self.cfg = cfg if cfg is not None else Config()
         self.echo_alloc = echo_alloc
+        self.accept_semantics = accept_semantics
         self._env = EnvDouble(store, policy)
         # Strategy raises NotImplementedError at construction for unsupported cfg.
         self._strategy = Strategy(self.cfg)
@@ -79,7 +81,7 @@ class MiniSeller:
             self.store,
             self.policy,
             partial_bid_policy=self.cfg.partial_bid_policy,
-            accept_semantics="spike",
+            accept_semantics=self.accept_semantics,
         )
         self.last_view = None
 
