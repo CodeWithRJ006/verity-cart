@@ -61,7 +61,9 @@ def buyers_arg(spec):
             raise SystemExit("arena/family.py must exist and define a BUYERS dict (evaluate.py --buyers contract)")
         return rel(f)
     if spec == "personas":
-        raise SystemExit("personas adapter is stage S5, not available yet")
+        if "ARENA_PROVIDER" not in os.environ:
+            raise SystemExit("set ARENA_PROVIDER explicitly (fake|gemini|openrouter|ollama); or use personas/run_personas.py")
+        return rel(HERE / "personas" / "persona_buyers.py")
     return rel(spec)
 
 
