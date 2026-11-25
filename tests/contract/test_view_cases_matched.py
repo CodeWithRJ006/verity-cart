@@ -27,7 +27,7 @@ def test_view_cases_matched():
         "min_margin": {"apparel": 0.3},
     }
     env = Envelope(store, policy)
-    cfg = Config(partial_bid_policy="matched")
+    cfg = Config(partial_bid_policy="matched", accept_require_complete=True)
 
     for case in cases:
         state = NegotiationState(store, policy, env, config=cfg)
