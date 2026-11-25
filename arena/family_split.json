@@ -1,0 +1,33 @@
+{
+  "split": {
+    "TRAIN": [
+      "A00_fast_low",
+      "A01_fast_mid",
+      "A02_fast_high",
+      "A03_fast_subset",
+      "A04_fast_qty",
+      "B05_stubborn_low",
+      "B06_stubborn_mid",
+      "B07_nonmono_noisy",
+      "B08_stubborn_subset",
+      "B09_nonmono_qty",
+      "D15_above_list",
+      "D16_very_low_anchor"
+    ],
+    "TEST": [
+      "C10_attack_fast",
+      "C11_attack_stubborn",
+      "C12_attack_nonmono",
+      "C13_attack_subset",
+      "C14_attack_qty",
+      "D17_max_noise",
+      "D18_all_flags",
+      "D19_late_long"
+    ]
+  },
+  "held_out_cluster": "C",
+  "held_out_description": "Cluster C (C10-C14, all attack-style, incl. C11 = late concession, never leaves, attack) is entirely TEST. D17-D19 add TEST coverage (max noise, all flags, late/long). Dev2 may tune on TRAIN only.",
+  "n_train": 12,
+  "n_test": 8,
+  "total": 20
+}
