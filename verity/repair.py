@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Optional
 
 from verity.contracts import Basket, RepairResult, RepairStatus
 
@@ -65,6 +65,23 @@ def allocate_at_most(basket: Basket, env: object, target: int) -> RepairResult:
     return RepairResult(status=status, prices=prices, total=int(actual_total))
 
 
+def _strict_int_price(value: object) -> Optional[int]:
+    """Convert an env price to int without silent truncation.
+
+    Accepts a non-bool int, or a float with no fractional part (857.5 must NOT
+    become 857, which could sit below a true floor).  Anything else -- bool,
+    str, None, non-integral float, NaN, inf -- is rejected with None so the
+    caller can report INVALID_INPUT.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        return int(value)
+    return None
+
+
 def allocate_exact(basket: Basket, env: object, total: int) -> RepairResult:
     """Allocate integer per-line prices summing to exactly ``total``.
 
@@ -83,7 +100,9 @@ def allocate_exact(basket: Basket, env: object, total: int) -> RepairResult:
       otherwise           -> EXACT with sum(q_i * p_i) == total
 
     Integer arithmetic only (no float anywhere in feasibility or reconstruction);
-    the basket and env are never mutated.
+    the basket and env are never mutated.  Env prices are converted strictly
+    (_strict_int_price, no truncation) and lines are sorted by sku so the result
+    is independent of the basket's dict insertion order.
     """
     # --- input validation -------------------------------------------------
     if not isinstance(basket, dict) or not basket:
@@ -92,17 +111,33 @@ def allocate_exact(basket: Basket, env: object, total: int) -> RepairResult:
         return RepairResult(status=RepairStatus.INVALID_INPUT)
     lines = []
     for sku, qty in basket.items():
+        if not isinstance(sku, str):  # Basket = Dict[str, int] (contracts.py:9)
+            return RepairResult(status=RepairStatus.INVALID_INPUT)
         if not isinstance(qty, int) or isinstance(qty, bool) or qty < 1:
             return RepairResult(status=RepairStatus.INVALID_INPUT)
         lines.append((sku, qty))
 
+    # Determinism: allocation must not depend on the basket's insertion order.
+    lines.sort(key=lambda line: line[0])
+
     # Env lookups come last so an unknown SKU (KeyError from EnvDouble, or any
     # error from Dev1's Envelope) is reported as bad input rather than raised.
     try:
-        floors = {sku: int(env.floor(sku)) for sku, _ in lines}
-        lists = {sku: int(env.list_price(sku)) for sku, _ in lines}
+        raw_floors = {sku: env.floor(sku) for sku, _ in lines}
+        raw_lists = {sku: env.list_price(sku) for sku, _ in lines}
     except Exception:
         return RepairResult(status=RepairStatus.INVALID_INPUT)
+
+    # Strict conversion of the lookups: no int() truncation of 857.5 -> 857.
+    floors: Dict[str, int] = {}
+    lists: Dict[str, int] = {}
+    for sku, _ in lines:
+        floor_price = _strict_int_price(raw_floors[sku])
+        list_price = _strict_int_price(raw_lists[sku])
+        if floor_price is None or list_price is None:
+            return RepairResult(status=RepairStatus.INVALID_INPUT)
+        floors[sku] = floor_price
+        lists[sku] = list_price
 
     F = sum(qty * floors[sku] for sku, qty in lines)
     L = sum(qty * lists[sku] for sku, qty in lines)

@@ -292,6 +292,111 @@ def test_invalid_input_statuses():
 
 
 # ---------------------------------------------------------------------------
+# 7. strict price conversion (no silent truncation) and sku-key validation
+# ---------------------------------------------------------------------------
+
+class _FloatEnv(_FixedEnv):
+    """Same env double, but integral prices come back as floats.
+
+    Non-numeric values are passed through untouched, so a bad value stays bad.
+    """
+
+    @staticmethod
+    def _as_price(value):
+        if isinstance(value, int) and not isinstance(value, bool):
+            return float(value)
+        return value
+
+    def floor(self, sku):
+        return self._as_price(super().floor(sku))
+
+    def list_price(self, sku):
+        return self._as_price(super().list_price(sku))
+
+
+INT_ENV = _FixedEnv({"A": 858}, {"A": 900})
+FLOAT_ENV = _FloatEnv({"A": 858}, {"A": 900})
+
+
+def test_integral_float_prices_match_int_prices():
+    """858.0 must behave exactly like 858 (same RepairResult)."""
+    for total in (858, 870, 899, 900):
+        from_ints = allocate_exact({"A": 1}, INT_ENV, total)
+        from_floats = allocate_exact({"A": 1}, FLOAT_ENV, total)
+        assert from_floats == from_ints, (total, from_floats, from_ints)
+        assert from_ints.status == RepairStatus.EXACT, (total, from_ints)
+    print("integral float env: 4 totals matched the int env exactly")
+
+
+def test_non_integral_or_non_numeric_prices_are_invalid_input():
+    """857.5 / True / "858" / None / NaN / inf must NOT be truncated to 857."""
+    bad_values = [857.5, True, "858", None, float("nan"), float("inf")]
+    for bad in bad_values:
+        envs = [
+            _FixedEnv({"A": bad}, {"A": 900}),   # bad floor
+            _FixedEnv({"A": 858}, {"A": bad}),   # bad list price
+            _FloatEnv({"A": bad}, {"A": bad}),    # both, via the float env
+        ]
+        for env in envs:
+            result = allocate_exact({"A": 1}, env, 870)
+            assert result.status == RepairStatus.INVALID_INPUT, (bad, env, result)
+            assert result.prices is None and result.total is None
+
+    # The regression this guards: a float floor of 857.5 would have become 857
+    # under int(), silently pricing below the true floor.
+    truncated = allocate_exact({"A": 1}, _FixedEnv({"A": 857.5}, {"A": 900}), 870)
+    assert truncated.status == RepairStatus.INVALID_INPUT, truncated
+    print(f"strict conversion: {len(bad_values)} bad values x 3 envs rejected")
+
+
+def test_non_str_basket_keys_are_invalid_input_and_never_raise():
+    """Basket keys must be str (contracts.py:9); bad keys are rejected, not sorted."""
+    baskets = [{None: 1}, {7: 1}, {None: 1, "S001": 1}]
+    for basket in baskets:
+        for total in (10, 20, 100):
+            result = allocate_exact(basket, EXPLICIT_ENV, total)
+            assert result.status == RepairStatus.INVALID_INPUT, (basket, total, result)
+            assert result.prices is None and result.total is None
+    print(f"non-str basket keys: {len(baskets)} baskets rejected without raising")
+
+
+def test_exact_is_independent_of_basket_insertion_order():
+    """Sorting by sku makes the result ignore the basket's insertion order."""
+    rng = random.Random(2026)
+    checked = 0
+    for _ in range(300):
+        n = rng.randint(1, 5)
+        skus = rng.sample(IN_STOCK, n)
+        basket = {s: rng.randint(1, min(STORE[s]["stock"], 5)) for s in skus}
+        items = list(basket.items())
+        rng.shuffle(items)
+        shuffled = dict(items)
+        F, L = _totals(shuffled)
+        for total in (F, (F + L) // 2, L):
+            assert allocate_exact(shuffled, ENV, total) == allocate_exact(
+                basket, ENV, total
+            ), (basket, shuffled, total)
+        checked += 1
+    print(f"insertion-order independence: {checked} shuffled baskets checked")
+
+
+@SETTINGS
+@given(full_baskets(), st.integers(min_value=-100, max_value=300000),
+       st.randoms(use_true_random=False))
+def test_exact_insertion_order_property(basket, total, rng):
+    """Hypothesis version: a shuffled basket yields an equal RepairResult."""
+    items = list(basket.items())
+    rng.shuffle(items)
+    shuffled = dict(items)
+    assert list(shuffled) == [sku for sku, _ in items]
+    assert allocate_exact(shuffled, ENV, total) == allocate_exact(basket, ENV, total), (
+        basket,
+        shuffled,
+        total,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Maximality MEASUREMENT for allocate_at_most (printed, never asserted)
 # ---------------------------------------------------------------------------
 
