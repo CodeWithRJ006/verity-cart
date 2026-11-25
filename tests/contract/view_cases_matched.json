@@ -1,0 +1,370 @@
+[
+  {
+    "id": "case_matched_01_single_line_in_two_sku_basket",
+    "description": "Partial bid matching 1 of 2 SKUs in basket",
+    "note": "Basket={S001: 1, S002: 1}. L = 1000 + 1200 = 2200. F = 858 + 1001 = 1859. Turn 2 buyer offers only S001 at 900. Matched line S001 has num = 1*900 = 900, den = 1*list_price(S001) = 1000. Ratio = 900/1000 = 0.90. S002 missing, so bid_complete=False, bid_valid_as_made=False.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1},
+            {"sku": "S002", "qty": 1}
+          ],
+          "text": "Looking for items S001 and S002"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 1, "unit_price": 900}
+          ],
+          "text": "How about 900 for S001?"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.9],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_02_partial_with_unrelated_extra_sku",
+    "description": "Partial bid with matched basket SKU and extra non-basket SKU",
+    "note": "Basket={S001: 2}. L = 2*1000 = 2000. F = 2*858 = 1716. Turn 2 buyer bids S001 at 950 (qty 2) and S004 at 400 (qty 3). S004 not in basket, ignored. S001 num = 2*950 = 1900, den = 2*1000 = 2000. Ratio = 1900/2000 = 0.95. bids=[0.95], bid_complete=False.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 2}
+          ],
+          "text": "Need 2 of S001"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2000,
+          "F": 1716,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 2, "unit_price": 950},
+            {"sku": "S004", "qty": 3, "unit_price": 400}
+          ],
+          "text": "Offering 950 each for S001 plus S004"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2000,
+          "F": 1716,
+          "bids": [0.95],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_03_invalid_price_line_skipped_valid_line_matched",
+    "description": "One line has unparseable price string, other line matches",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200, F = 1859. S001 has price='bad_price', skipped. S002 has valid price 1080: num = 1*1080 = 1080, den = 1*1200 = 1200. Ratio = 1080/1200 = 0.90. bids=[0.90], bid_complete=False.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1},
+            {"sku": "S002", "qty": 1}
+          ],
+          "text": "Two items please"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 1, "unit_price": "bad_price"},
+            {"sku": "S002", "qty": 1, "unit_price": 1080}
+          ],
+          "text": "1080 for S002"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.9],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_04_complete_bid_in_matched_mode",
+    "description": "Complete bid correctly registers as bid_complete and valid in matched mode",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200, F = 1859. Both SKUs present and valid. total_bid = 1*900 + 1*1100 = 2000. L = 2200. Ratio = 2000/2200 = 0.9090909090909091. bid_complete=True, bid_valid_as_made=True.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1},
+            {"sku": "S002", "qty": 1}
+          ],
+          "text": "Need S001 and S002"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 1, "unit_price": 900},
+            {"sku": "S002", "qty": 1, "unit_price": 1100}
+          ],
+          "text": "I can pay 900 and 1100"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.9090909090909091],
+          "bid_complete": true,
+          "bid_valid_as_made": true,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_05_all_lines_unusable_no_ratio_added",
+    "description": "Buyer message contains only non-basket items, no ratio added",
+    "note": "Basket={S001: 1}. L = 1000, F = 858. Buyer offers only S004 (not in basket). den = 0, so no ratio added to bids. bids=[], bid_complete=False, bid_valid_as_made=False.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1}
+          ],
+          "text": "S001 please"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 1000,
+          "F": 858,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S004", "qty": 1, "unit_price": 450}
+          ],
+          "text": "Change mind, S004 for 450"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 1000,
+          "F": 858,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_06_remember_decision_ratio_overrides_repaired",
+    "description": "state.remember with Decision stores decision.ratio as last_offer_ratio",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200, F = 1859. Turn 1 remember passes offer with total 2090 (ratio 2090/2200 = 0.95), but Decision has ratio 0.9545454545454546. Turn 2 expected_view.last_offer_ratio equals 0.9545454545454546.",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1},
+            {"sku": "S002", "qty": 1}
+          ],
+          "text": "S001 and S002"
+        },
+        "remember": {
+          "offer": {
+            "type": "offer",
+            "items": [
+              {"sku": "S001", "qty": 1, "unit_price": 950},
+              {"sku": "S002", "qty": 1, "unit_price": 1140}
+            ],
+            "text": "My offer is 2090"
+          },
+          "decision_ratio": 0.9545454545454546
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 1, "unit_price": 900}
+          ],
+          "text": "900 for S001"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.9],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": 0.9545454545454546
+        }
+      }
+    ]
+  },
+  {
+    "id": "case_matched_07_multiple_partial_bids_accumulate",
+    "description": "Successive partial bids accumulate in bids history",
+    "note": "Basket={S001: 1, S002: 1}. L = 2200. Turn 2 matches S001 (860/1000 = 0.86). Turn 3 matches S002 (1050/1200 = 0.875). bids accumulates [0.86, 0.875].",
+    "turns": [
+      {
+        "incoming": {
+          "type": "request",
+          "round": 1,
+          "items": [
+            {"sku": "S001", "qty": 1},
+            {"sku": "S002", "qty": 1}
+          ],
+          "text": "Looking for both"
+        },
+        "expected_view": {
+          "round": 1,
+          "msg_type": "request",
+          "L": 2200,
+          "F": 1859,
+          "bids": [],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 2,
+          "items": [
+            {"sku": "S001", "qty": 1, "unit_price": 860}
+          ],
+          "text": "860 for S001"
+        },
+        "expected_view": {
+          "round": 2,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.86],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      },
+      {
+        "incoming": {
+          "type": "counter",
+          "round": 3,
+          "items": [
+            {"sku": "S002", "qty": 1, "unit_price": 1050}
+          ],
+          "text": "1050 for S002"
+        },
+        "expected_view": {
+          "round": 3,
+          "msg_type": "counter",
+          "L": 2200,
+          "F": 1859,
+          "bids": [0.86, 0.875],
+          "bid_complete": false,
+          "bid_valid_as_made": false,
+          "last_offer_ratio": null
+        }
+      }
+    ]
+  }
+]
