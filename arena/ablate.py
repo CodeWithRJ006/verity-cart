@@ -1,7 +1,9 @@
 """Ablation ladder A, B0, B, C, D (+ spike reference S) with identical seeds and buyers.
   python arena/ablate.py --seeds 1,2,3 --buyers public
 Rows that cannot run yet (impl not merged, unknown switch) are reported as unavailable, not fatal."""
-import argparse, sys
+
+import argparse
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -39,13 +41,13 @@ def main():
             continue
         try:
             res = R.execute(str(R.ROOT / seller), seeds, a.buyers, a.n, impl, sw, "abl_" + name)
-            done[name] = res; table.append((name, desc, res, None))
+            done[name] = res
+            table.append((name, desc, res, None))
         except (RuntimeError, SystemExit) as e:
             table.append((name, desc, None, str(e)))
         print("row %-2s %s" % (name, "ok" if name in done else "UNAVAILABLE: " + table[-1][3][:100]))
     md = stats.ladder_markdown(table, "A", "Ablation ladder (%s seeds %s, buyers %s)" % (kind, a.seeds, a.buyers))
     stem = "ablation_%s_%s" % (a.buyers.replace("/", "_").replace("\\", "_"), a.seeds.replace(",", "-"))
-    first = next(iter(done.values()), None)
     f = R.write_json({"git_sha": R.git_sha(), "label": stem, "seeds": seeds, "buyers": a.buyers, "rows": done}, stem, a.out)
     m = f.with_suffix(".md")
     if m.exists() and m.read_text(encoding="utf-8") != md:

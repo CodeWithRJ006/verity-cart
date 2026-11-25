@@ -2,7 +2,15 @@
   python arena/run_arena.py --seller seller_spike.py --seeds 1,2,3 --buyers public --label spike
   python arena/run_arena.py --seller seller_verity.py --impl real --switches echo_buyer_total=false --seeds 0,7,8,9
 --impl / --switches become VERITY_IMPL / VERITY_SWITCHES for the subprocess. Python 3.9, stdlib only."""
-import argparse, datetime, json, os, subprocess, sys, tempfile, re
+
+import argparse
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -31,7 +39,10 @@ def check_seeds(seeds, i_mean_it=False):
     """Seed protocol (Handbook 1.1 E). TUNE {1,2,3}, DEV-EVAL {0,7,8,9}, SEALED {20..29}; sets never mixed with SEALED."""
     s = set(seeds)
     if not s <= (TUNE | DEV | SEALED):
-        raise SystemExit("seeds outside the protocol (TUNE %s, DEV-EVAL %s, SEALED 20-29): %s" % (sorted(TUNE), sorted(DEV), sorted(s - (TUNE | DEV | SEALED))))
+        raise SystemExit(
+            "seeds outside the protocol (TUNE %s, DEV-EVAL %s, SEALED 20-29): %s"
+            % (sorted(TUNE), sorted(DEV), sorted(s - (TUNE | DEV | SEALED)))
+        )
     if s & SEALED:
         if s - SEALED:
             raise SystemExit("SEALED seeds cannot be mixed with other seeds")
@@ -61,7 +72,9 @@ def buyers_arg(spec):
             raise SystemExit("arena/family.py must exist and define a BUYERS dict (evaluate.py --buyers contract)")
         return rel(f)
     if spec == "personas":
-        raise SystemExit("personas adapter is stage S5, not available yet")
+        if "ARENA_PROVIDER" not in os.environ:
+            raise SystemExit("set ARENA_PROVIDER explicitly (fake|gemini|openrouter|ollama); or use personas/run_personas.py")
+        return rel(HERE / "personas" / "persona_buyers.py")
     return rel(spec)
 
 
@@ -70,7 +83,8 @@ def _ratio(items, basket):
     for it in items or []:
         try:
             if it["sku"] in basket and isinstance(it["unit_price"], (int, float)) and not isinstance(it["unit_price"], bool):
-                num += it["qty"] * it["unit_price"]; den += it["qty"] * basket[it["sku"]][0]
+                num += it["qty"] * it["unit_price"]
+                den += it["qty"] * basket[it["sku"]][0]
         except (KeyError, TypeError):
             pass
     return num / den if den else None
@@ -84,43 +98,74 @@ def round10_record(row, store, policy):
     first = next((m for m in tr if m["from"] == "seller" and m.get("type") == "offer"), None)
     if not s10 or s10.get("type") != "offer" or not first:
         return None
-    basket = {i["sku"]: (store[i["sku"]]["price"], floor_price(store[i["sku"]], policy)) for i in first["items"] if i["sku"] in store}
-    bids = [_ratio(m.get("items"), basket) for m in tr if m["from"] == "buyer" and m.get("round", 99) <= 10
-            and m.get("type") in ("request", "counter")]
+    basket = {
+        i["sku"]: (store[i["sku"]]["price"], floor_price(store[i["sku"]], policy)) for i in first["items"] if i["sku"] in store
+    }
+    bids = [
+        _ratio(m.get("items"), basket)
+        for m in tr
+        if m["from"] == "buyer" and m.get("round", 99) <= 10 and m.get("type") in ("request", "counter")
+    ]
     bids = [b for b in bids if b is not None]
     if not bids:
         return None
     L = sum(i["qty"] * basket[i["sku"]][0] for i in first["items"] if i["sku"] in basket)
     F = sum(i["qty"] * basket[i["sku"]][1] for i in first["items"] if i["sku"] in basket)
     accepted = any(m["from"] == "buyer" and m.get("round") == 11 and m.get("type") == "accept" for m in tr)
-    return {"dist_to_floor": round(F / L - bids[-1], 4), "rising": len(bids) > 1 and bids[-1] > bids[-2],
-            "accepted": accepted, "buyer": row["buyer"]}
+    return {
+        "dist_to_floor": round(F / L - bids[-1], 4),
+        "rising": len(bids) > 1 and bids[-1] > bids[-2],
+        "accepted": accepted,
+        "buyer": row["buyer"],
+    }
 
 
 def metrics(rows):
     deals = [r for r in rows if r["deal"]]
-    mean = lambda xs: sum(xs) / len(xs) if xs else 0.0
+
+    def mean(xs):
+        return sum(xs) / len(xs) if xs else 0.0
+
     by = {}
     for r in rows:
         by.setdefault(r["buyer"], []).append(r["score"])
-    return {"score": 100 * mean([r["score"] for r in rows]), "deal_rate": len(deals) / len(rows),
-            "value_per_negotiation": mean([r["value"] for r in rows]),
-            "value_among_deals": mean([r["value"] for r in deals]),
-            "margin_kept": mean([r["margin_kept"] for r in deals]),
-            "policy": sum(r["policy_violations"] for r in rows), "truth": sum(r["truth_violations"] for r in rows),
-            "deadlocks": sum(r["deadlock"] for r in rows),
-            "by_buyer": {k: 100 * mean(v) for k, v in sorted(by.items())}, "n": len(rows)}
+    return {
+        "score": 100 * mean([r["score"] for r in rows]),
+        "deal_rate": len(deals) / len(rows),
+        "value_per_negotiation": mean([r["value"] for r in rows]),
+        "value_among_deals": mean([r["value"] for r in deals]),
+        "margin_kept": mean([r["margin_kept"] for r in deals]),
+        "policy": sum(r["policy_violations"] for r in rows),
+        "truth": sum(r["truth_violations"] for r in rows),
+        "deadlocks": sum(r["deadlock"] for r in rows),
+        "by_buyer": {k: 100 * mean(v) for k, v in sorted(by.items())},
+        "n": len(rows),
+    }
 
 
 def run_seed(seller, seed, n, buyers, impl, switches, store, policy, keep=None):
     env = {k: v for k, v in os.environ.items() if not k.startswith("VERITY_")}
-    if impl: env["VERITY_IMPL"] = impl
-    if switches: env["VERITY_SWITCHES"] = switches
+    if impl:
+        env["VERITY_IMPL"] = impl
+    if switches:
+        env["VERITY_SWITCHES"] = switches
     with tempfile.TemporaryDirectory() as td:
         log = Path(keep) if keep else Path(td) / "log.jsonl"
-        cmd = [sys.executable, "evaluate.py", "--seller", rel(seller), "--seed", str(seed), "--n", str(n),
-               "--no-baseline", "--log", str(log)]
-        if buyers: cmd += ["--buyers", buyers]
+        cmd = [
+            sys.executable,
+            "evaluate.py",
+            "--seller",
+            rel(seller),
+            "--seed",
+            str(seed),
+            "--n",
+            str(n),
+            "--no-baseline",
+            "--log",
+            str(log),
+        ]
+        if buyers:
+            cmd += ["--buyers", buyers]
         p = subprocess.run(cmd, cwd=str(KIT), env=env, capture_output=True, text=True)
         if p.returncode:
             raise RuntimeError((p.stderr or p.stdout).strip().splitlines()[-1][:300])
@@ -131,7 +176,8 @@ def run_seed(seller, seed, n, buyers, impl, switches, store, policy, keep=None):
         raise RuntimeError("score mismatch: log %.2f vs printed %s" % (m["score"], printed and printed.group(1)))
     per_neg = {"%d:%s" % (seed, r["id"]): 100 * r["score"] for r in rows}
     r10 = [x for x in (round10_record(r, store, policy) for r in rows) if x]
-    for x in r10: x["seed"] = seed
+    for x in r10:
+        x["seed"] = seed
     return m, per_neg, r10
 
 
@@ -145,16 +191,29 @@ def execute(seller, seeds, buyers="public", n=210, impl=None, switches=None, lab
             Path(keep_logs).mkdir(parents=True, exist_ok=True)
             keep = str(Path(keep_logs) / ("%s_seed%d.jsonl" % (label, s)))
         m, d, r = run_seed(seller, s, n, barg, impl, switches, store, policy, keep)
-        per[str(s)] = m; pn.update(d); r10 += r
+        per[str(s)] = m
+        pn.update(d)
+        r10 += r
     sw = dict(kv.split("=", 1) for kv in switches.split(",")) if switches else {}
-    return {"git_sha": git_sha(), "label": label, "seller": str(seller), "impl": impl, "switches": sw,
-            "buyers": buyers, "seeds": list(seeds), "per_seed": per, "per_negotiation": pn,
-            "round10": r10, "n_negotiations": n}
+    return {
+        "git_sha": git_sha(),
+        "label": label,
+        "seller": str(seller),
+        "impl": impl,
+        "switches": sw,
+        "buyers": buyers,
+        "seeds": list(seeds),
+        "per_seed": per,
+        "per_negotiation": pn,
+        "round10": r10,
+        "n_negotiations": n,
+    }
 
 
 def write_json(obj, stem, out):
     """Append-only: same name + identical content is fine (proves determinism); different content is an error."""
-    out = Path(out); out.mkdir(parents=True, exist_ok=True)
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
     f = out / ("%s_%s_%s.json" % (datetime.date.today().strftime("%Y%m%d"), obj["git_sha"], stem))
     text = json.dumps(obj, indent=1, sort_keys=True)
     if f.exists():
@@ -185,9 +244,20 @@ def main():
     res["seed_set"] = kind
     f = write_json(res, a.label, a.out)
     for s, d in res["per_seed"].items():
-        print("seed %s: score %.1f deals %.3f v/neg %.3f v/deal %.3f policy %d truth %d deadlocks %d %s" % (
-            s, d["score"], d["deal_rate"], d["value_per_negotiation"], d["value_among_deals"], d["policy"],
-            d["truth"], d["deadlocks"], {k: round(v, 1) for k, v in d["by_buyer"].items()}))
+        print(
+            "seed %s: score %.1f deals %.3f v/neg %.3f v/deal %.3f policy %d truth %d deadlocks %d %s"
+            % (
+                s,
+                d["score"],
+                d["deal_rate"],
+                d["value_per_negotiation"],
+                d["value_among_deals"],
+                d["policy"],
+                d["truth"],
+                d["deadlocks"],
+                {k: round(v, 1) for k, v in d["by_buyer"].items()},
+            )
+        )
     print("wrote", f)
     if kind == "sealed":
         SEALED_MARK.write_text(json.dumps({"git_sha": res["git_sha"], "label": a.label, "file": f.name}))
