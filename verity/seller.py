@@ -45,7 +45,7 @@ class Seller:
     def start(self, negotiation_id: str) -> None:
         self.negotiation_id = negotiation_id
         if self.state is None:
-            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env)
+            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env, config=self.cfg)
         else:
             self.state.start(negotiation_id)
         self.last_offer = None
@@ -92,7 +92,7 @@ class Seller:
             return {"type": "message", "text": "Thank you, goodbye."}
 
         if self.state is None:
-            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env)
+            self.state = NegotiationState(self.store, self.policy, self.env, self.gate_env, config=self.cfg)
 
         view = self.state.view(parsed)
         if not self.state.basket:
@@ -191,7 +191,7 @@ class Seller:
         if not ok or t_errs:
             return self._fallback()
 
-        self.state.remember(out)
+        self.state.remember(out, decision)
         self.last_offer = out
 
         if self.log_path:

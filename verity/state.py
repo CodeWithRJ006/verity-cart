@@ -27,11 +27,13 @@ class NegotiationState:
         policy: Dict[str, Any],
         env: Any,
         gate_env: Optional[Any] = None,
+        config: Optional[Any] = None,
     ) -> None:
         self.store = store
         self.policy = policy
         self.env = env
         self.gate_env = gate_env if gate_env is not None else Envelope(store, policy)
+        self.config = config
         self.basket: Optional[Basket] = None
         self.dropped: List[str] = []
         self.bids: List[float] = []
@@ -132,8 +134,79 @@ class NegotiationState:
                 if L > 0:
                     ratio = total_bid / L
                     self.bids.append(ratio)
+            else:
+                partial_policy = (
+                    getattr(self.config, "partial_bid_policy", "ignore")
+                    if self.config
+                    else "ignore"
+                )
+                if partial_policy == "matched":
+                    num = 0.0
+                    den = 0.0
+                    for it in items:
+                        if not isinstance(it, dict):
+                            continue
+                        sku = it.get("sku")
+                        if sku not in self.basket:
+                            continue
+                        q = it.get("qty")
+                        pr = it.get("unit_price")
+                        if (
+                            not isinstance(q, int)
+                            or isinstance(q, bool)
+                            or q < 1
+                            or not isinstance(pr, (int, float))
+                            or isinstance(pr, bool)
+                            or not math.isfinite(pr)
+                        ):
+                            continue
+                        num += q * pr
+                        den += q * self.env.list_price(sku)
+                    if den > 0:
+                        self.bids.append(num / den)
 
-        bid_valid = gate.bid_valid_as_made(items, self.basket, self.gate_env)
+        accept_require_complete = (
+            getattr(self.config, "accept_require_complete", True)
+            if self.config
+            else True
+        )
+        if accept_require_complete:
+            bid_valid = gate.bid_valid_as_made(items, self.basket, self.gate_env)
+        else:
+            # Follow spike's directly_acceptable with gate checks:
+            # (known SKU, int qty <= stock, price in [floor, list], no duplicates)
+            bid_valid = False
+            if isinstance(items, list) and items:
+                seen_skus_acc = set()
+                valid = True
+                for it in items:
+                    if not isinstance(it, dict):
+                        valid = False
+                        break
+                    s = it.get("sku")
+                    q = it.get("qty")
+                    p = it.get("unit_price")
+                    if not isinstance(s, str) or s in seen_skus_acc:
+                        valid = False
+                        break
+                    seen_skus_acc.add(s)
+                    try:
+                        fl = self.gate_env.floor(s)
+                        lp = self.gate_env.list_price(s)
+                        st = self.gate_env.stock(s) if hasattr(self.gate_env, "stock") else self.store[s]["stock"]
+                    except Exception:
+                        valid = False
+                        break
+                    if type(q) is not int or isinstance(q, bool) or not (1 <= q <= st):
+                        valid = False
+                        break
+                    if type(p) not in (int, float) or isinstance(p, bool) or not math.isfinite(p):
+                        valid = False
+                        break
+                    if not (fl <= p <= lp):
+                        valid = False
+                        break
+                bid_valid = valid
 
         return View(
             round=effective_round,
@@ -146,9 +219,12 @@ class NegotiationState:
             last_offer_ratio=self.last_offer_ratio,
         )
 
-    def remember(self, offer: dict) -> None:
+    def remember(self, offer: dict, decision: Optional[Any] = None) -> None:
         """Record seller's own outgoing offer ratio."""
         if not isinstance(offer, dict) or offer.get("type") != "offer":
+            return
+        if decision is not None and getattr(decision, "ratio", None) is not None:
+            self.last_offer_ratio = decision.ratio
             return
         items = offer.get("items")
         if isinstance(items, list) and self.basket:
