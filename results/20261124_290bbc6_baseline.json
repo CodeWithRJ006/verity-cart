@@ -1,0 +1,29 @@
+{
+ "git_sha": "290bbc6",
+ "label": "baseline",
+ "seller": "kit\\example_seller.py",
+ "impl": null,
+ "switches": {},
+ "seeds": [
+  0
+ ],
+ "per_seed": {
+  "0": {
+   "score": 48.5,
+   "deal_rate": 0.757,
+   "margin_kept": 0.673,
+   "value_per_negotiation": 0.51,
+   "policy": 0,
+   "truth": 0,
+   "deadlocks": 21,
+   "n_negotiations": 210,
+   "by_buyer": {
+    "cooperative": 69.1,
+    "hard_bargainer": 40.8,
+    "manipulator": 35.5
+   }
+  }
+ },
+ "round10": [],
+ "n_negotiations": 210
+}
