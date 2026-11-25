@@ -8,10 +8,12 @@ on:
 
 jobs:
   ci:
+    name: ci (${{ matrix.python }}, ${{ matrix.impl }})
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         python: ["3.9", "3.12"]
+        impl: ["stub", "real"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,9 +33,13 @@ jobs:
         run: python tools/check_stdlib_only.py verity
 
       - name: Run test suite
+        env:
+          VERITY_IMPL: ${{ matrix.impl }}
         run: pytest -q
 
       - name: Evaluate seller against benchmark
+        env:
+          VERITY_IMPL: ${{ matrix.impl }}
         run: |
           mkdir -p results
           cd kit && python evaluate.py --seller ../seller_verity.py --seed 0 --no-baseline | tee ../results/ci_seed0.txt
