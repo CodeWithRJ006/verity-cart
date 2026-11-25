@@ -23,7 +23,6 @@ from verity.config import Config  # noqa: E402
 from verity.contracts import Action, Decision, View  # noqa: E402
 from verity.strategy import Strategy  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
