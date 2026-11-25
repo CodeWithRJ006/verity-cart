@@ -223,6 +223,9 @@ class NegotiationState:
         """Record seller's own outgoing offer ratio."""
         if not isinstance(offer, dict) or offer.get("type") != "offer":
             return
+        # Strategy returns ratio=None for the markup branch (m>0, round>=10)
+        # to mean "do not update last_offer_ratio"; remember() treats None as
+        # "use repaired ratio", which is inert at max_round=10.
         if decision is not None and getattr(decision, "ratio", None) is not None:
             self.last_offer_ratio = decision.ratio
             return
