@@ -6,6 +6,7 @@ import math
 from typing import Any, Dict, List, Optional
 
 from . import gate
+from .config import Config
 from .contracts import Basket, View
 from .envelope import Envelope
 from .parser import ParsedMsg, parse
@@ -27,7 +28,7 @@ class NegotiationState:
         policy: Dict[str, Any],
         env: Any,
         gate_env: Optional[Any] = None,
-        config: Optional[Any] = None,
+        config: Optional[Config] = None,
     ) -> None:
         self.store = store
         self.policy = policy
@@ -136,8 +137,8 @@ class NegotiationState:
                     self.bids.append(ratio)
             else:
                 partial_policy = (
-                    getattr(self.config, "partial_bid_policy", "ignore")
-                    if self.config
+                    self.config.partial_bid_policy
+                    if self.config is not None
                     else "ignore"
                 )
                 if partial_policy == "matched":
@@ -166,8 +167,8 @@ class NegotiationState:
                         self.bids.append(num / den)
 
         accept_require_complete = (
-            getattr(self.config, "accept_require_complete", True)
-            if self.config
+            self.config.accept_require_complete
+            if self.config is not None
             else True
         )
         if accept_require_complete:
