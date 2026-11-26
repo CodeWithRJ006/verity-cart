@@ -62,3 +62,41 @@ def test_defaults_match_spike():
 
 def test_accept_require_complete_default_false():
     assert Config().accept_require_complete is False
+
+
+# ---------------------------------------------------------------------------
+# Round-10 margin: walk_slack and r10_close_margin are one quantity.
+# walk_slack is the stored field; r10_close_margin = 1 - walk_slack is derived.
+# ---------------------------------------------------------------------------
+
+def test_r10_close_margin_is_derived_from_walk_slack():
+    assert Config().r10_close_margin == pytest.approx(0.03)
+    assert Config(walk_slack=0.92).r10_close_margin == pytest.approx(0.08)
+    assert Config(walk_slack=1.0).r10_close_margin == pytest.approx(0.0)
+
+
+def test_from_switches_accepts_r10_close_margin_spelling():
+    cfg = Config.from_switches("r10_close_margin=0.08")
+    assert cfg.walk_slack == pytest.approx(0.92)
+    assert cfg.r10_close_margin == pytest.approx(0.08)
+
+
+def test_from_switches_accepts_walk_slack_spelling():
+    cfg = Config.from_switches("walk_slack=0.92")
+    assert cfg.walk_slack == pytest.approx(0.92)
+    assert cfg.r10_close_margin == pytest.approx(0.08)
+
+
+def test_from_switches_accepts_consistent_pair():
+    cfg = Config.from_switches("walk_slack=0.92,r10_close_margin=0.08")
+    assert cfg.walk_slack == pytest.approx(0.92)
+
+
+def test_from_switches_rejects_inconsistent_pair():
+    with pytest.raises(ValueError, match="disagree"):
+        Config.from_switches("walk_slack=0.97,r10_close_margin=0.08")
+
+
+def test_from_switches_r10_close_margin_bad_float_raises():
+    with pytest.raises(ValueError, match="Invalid float value for r10_close_margin"):
+        Config.from_switches("r10_close_margin=soon")
