@@ -318,11 +318,16 @@ def make_buyers(configs):
 
 
 # FAMILY_ONLY=<name> restricts BUYERS to one config (used by the per-config table).
-# FAMILY_ATTACK=flip forces attack_style on for configs that have it off (and vice versa).
+# FAMILY_ATTACK=on forces attack style on for all 20; =both runs all 40 variants. FAMILY_SPLIT=TRAIN|TEST filters.
 _only = os.environ.get("FAMILY_ONLY")
 _cfgs = family_variants() if os.environ.get("FAMILY_ATTACK") == "both" else build_family()
 if os.environ.get("FAMILY_ATTACK") == "on":
     _cfgs = [with_attack(c, True) for c in build_family()]
+_split = os.environ.get("FAMILY_SPLIT")           # TRAIN | TEST (arena/family_split.json)
+if _split:
+    import json
+    _names = set(json.loads((Path(__file__).resolve().parent / "family_split.json").read_text())["split"][_split])
+    _cfgs = [c for c in _cfgs if c["name"].split("+")[0] in _names]
 if _only:
     _cfgs = [c for c in _cfgs if c["name"] == _only]
 BUYERS = make_buyers(_cfgs)
