@@ -4,6 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Any, Dict
 
+# from_switches alias: r10_close_margin == 1 - walk_slack (one stored field).
+_COMPLEMENT_KEY = "r10_close_margin"
+
 
 @dataclass
 class Config:
@@ -13,14 +16,24 @@ class Config:
     slack: float = 0.0
     m: float = 0.0
     g: float = 0.5
+    # Round-10 close margin: ONE source of truth.
+    # walk_slack and r10_close_margin are the same quantity
+    # (r10_close_margin == 1 - walk_slack).  walk_slack is the stored field;
+    # r10_close_margin is a read-only derived property, so the two can never
+    # disagree.  from_switches accepts either spelling.
     walk_slack: float = 0.97
     # Framework extensions
     max_round: int = 10
     partial_bid_policy: str = "matched"
-    r10_close_margin: float = 0.03
     echo_buyer_total: bool = True
+    r10_require_rising: bool = False
     allocator: str = "proportional"
     accept_require_complete: bool = False
+
+    @property
+    def r10_close_margin(self) -> float:
+        """Derived view of walk_slack (legacy_spike.py:183 uses walk_slack)."""
+        return 1.0 - self.walk_slack
 
     def __post_init__(self) -> None:
         if self.partial_bid_policy not in {"matched", "ignore"}:
@@ -46,6 +59,12 @@ class Config:
                 raise ValueError(f"Malformed switch (expected key=val): {pair!r}")
             k, _, v = pair.partition("=")
             k, v = k.strip(), v.strip()
+            if k == _COMPLEMENT_KEY:
+                try:
+                    kwargs[k] = float(v)
+                except ValueError:
+                    raise ValueError(f"Invalid float value for {k}: {v!r}") from None
+                continue
             if k not in field_types:
                 raise ValueError(f"Unknown config switch: {k!r}")
             ft = field_types[k]
@@ -63,4 +82,14 @@ class Config:
                 kwargs[k] = float(v)
             else:
                 kwargs[k] = v
+        if _COMPLEMENT_KEY in kwargs:
+            margin = kwargs.pop(_COMPLEMENT_KEY)
+            walk = 1.0 - margin
+            if "walk_slack" in kwargs and abs(kwargs["walk_slack"] - walk) > 1e-9:
+                raise ValueError(
+                    "walk_slack and r10_close_margin disagree: "
+                    f"walk_slack={kwargs['walk_slack']!r} but "
+                    f"1 - r10_close_margin={walk!r}"
+                )
+            kwargs["walk_slack"] = walk
         return cls(**kwargs)

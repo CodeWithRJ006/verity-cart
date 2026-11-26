@@ -20,18 +20,15 @@ class Strategy:
     """
 
     def __init__(self, cfg: Config) -> None:
-        self._cfg = cfg
-        # NotImplementedError guard: echo_buyer_total=False and r10_close_margin != 0.03
-        # are the two unsupported spike deviations.  Raising here (not in decide) lets
-        # the caller fail fast at construction time.
-        if not cfg.echo_buyer_total:
-            raise NotImplementedError("echo_buyer_total=False is not yet implemented")
-        if cfg.r10_close_margin != 0.03:
+        # cfg.allocator is not consulted anywhere in this class yet, so a
+        # non-default value would be a silent no-op.  Refuse it loudly instead.
+        # Remove this guard in the PR that wires greedy (verity/repair.py
+        # _check_allocator) into the seller.
+        if cfg.allocator != "proportional":
             raise NotImplementedError(
-                "r10_close_margin != 0.03 is not yet implemented "
-                "(walk_slack is the operative field; changing r10_close_margin would "
-                "silently disagree with walk_slack)"
+                f"allocator={cfg.allocator} is not wired into the seller yet"
             )
+        self._cfg = cfg
 
     # ------------------------------------------------------------------
     # spike helpers (legacy_spike.py:119-128)
@@ -94,8 +91,14 @@ class Strategy:
 
         # --- round-10 / R_MAX branch: bid still below floor (legacy_spike.py:182-189) ---
         if r >= R_MAX and b < floor_ratio:
-            # walk_slack test (legacy_spike.py:183)
-            if est >= floor_ratio * cfg.walk_slack:
+            # walk_slack test (legacy_spike.py:183); cfg.walk_slack is the single
+            # source of truth for the round-10 margin (r10_close_margin = 1 - it).
+            # r10_require_rising additionally demands a strictly rising bid history.
+            rising = (
+                not cfg.r10_require_rising
+                or (len(view.bids) >= 2 and view.bids[-1] > view.bids[-2])
+            )
+            if rising and est >= floor_ratio * cfg.walk_slack:
                 # Offer at floor — round-10 floor offer; ratio=None per spec
                 # Clamp to [F, L]: total=F is already the minimum; harmless because
                 # F <= L always holds by construction, so this is the tightest valid offer.
@@ -119,12 +122,14 @@ class Strategy:
             # or above L due to floating point.  Clamping is harmless because the final
             # offer is still within policy bounds and the buyer gets a valid price.
             total = max(F, min(L, int(pr * L)))
+            # ratio=None: the spike's markup block never updates last_o
+            # (legacy_spike.py:191-195), so the caller must leave it untouched.
             return Decision(
                 action=Action.COUNTER,
                 total=total,
                 mode=Mode.AT_MOST,
                 reason="markup",
-                ratio=pr,
+                ratio=None,
             )
 
         # --- accept branch (legacy_spike.py:196-201) ---
@@ -132,6 +137,18 @@ class Strategy:
             # ACCEPT iff bid_valid_as_made and (bid_complete or not accept_require_complete)
             if view.bid_valid_as_made and (view.bid_complete or not cfg.accept_require_complete):
                 return Decision(action=Action.ACCEPT, reason="take_accept", ratio=b)
+            # echo_buyer_total=False: no re-slice.  Fall through to the normal
+            # counter (legacy_spike.py:202-204) instead of echoing the buyer's total.
+            if not cfg.echo_buyer_total:
+                o = max(o, floor_ratio)
+                total = max(F, min(L, int(o * L)))
+                return Decision(
+                    action=Action.COUNTER,
+                    total=total,
+                    mode=Mode.AT_MOST,
+                    reason="take_counter",
+                    ratio=o,
+                )
             # Echo buyer's total (echo branch) — ratio = b (spike's last_o = b, line 199)
             # Clamp to [F, L]: int(b * L) could be slightly below F due to float; harmless.
             total = max(F, min(L, int(b * L)))

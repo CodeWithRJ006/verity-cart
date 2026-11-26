@@ -15,6 +15,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 KIT = Path(__file__).resolve().parents[2] / "kit"
 if str(KIT) not in sys.path:
     sys.path.insert(0, str(KIT))
@@ -275,3 +277,19 @@ def test_accept_require_complete_false_allows_incomplete():
               bid_complete=False, bid_valid_as_made=True, last_offer_ratio=None)
     d = Strategy(cfg).decide(v)
     assert d.action == Action.ACCEPT
+
+
+# ---------------------------------------------------------------------------
+# allocator: only "proportional" is wired into Strategy so far
+# ---------------------------------------------------------------------------
+
+def test_allocator_proportional_constructs():
+    """The default allocator constructs without complaint."""
+    strategy = Strategy(Config())
+    assert strategy._cfg.allocator == "proportional"
+
+
+def test_allocator_greedy_raises_until_wired():
+    """allocator="greedy" would be a silent no-op, so construction raises."""
+    with pytest.raises(NotImplementedError, match="allocator=greedy is not wired"):
+        Strategy(Config(allocator="greedy"))
