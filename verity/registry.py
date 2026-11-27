@@ -3,7 +3,7 @@ import os
 
 
 def load_impl(name=None):
-    name = name or os.environ.get("VERITY_IMPL", "stub")
+    name = name or os.environ.get("VERITY_IMPL", "real")
     if name == "stub":
         from . import repair_stub as repair
         from .strategy_stub import Strategy

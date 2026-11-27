@@ -30,8 +30,8 @@ class Seller:
                     raise ValueError(f"Unknown config param: {k!r}")
                 setattr(self.cfg, k, v)
 
-        # VERITY_IMPL: default "stub"
-        self.impl_name = os.environ.get("VERITY_IMPL", "stub")
+        # VERITY_IMPL: default "real"
+        self.impl_name = os.environ.get("VERITY_IMPL", "real")
         self.strategy_cls, self.repair = load_impl(self.impl_name)
         self.strategy = self.strategy_cls(self.cfg)
 
