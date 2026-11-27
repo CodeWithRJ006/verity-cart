@@ -16,10 +16,10 @@ ROWS = [
     ("A", "Kit example seller (baseline)", "kit/example_seller.py", None, None),
     ("S", "Feasibility spike (reference)", "seller_spike.py", None, None),
     ("B0", "Gate+templates, baseline acceptance rule", V, "baseline", None),
-    ("B", "P0 tuned, echo_buyer_total=false", V, "real", "echo_buyer_total=false"),
-    ("C", "P0 with re-slice (echo_buyer_total=true)", V, "real", "echo_buyer_total=true"),
-    ("D1", "C + allocator=proportional", V, "real", "echo_buyer_total=true,allocator=proportional"),
-    ("D2", "C + allocator=greedy", V, "real", "echo_buyer_total=true,allocator=greedy"),
+    ("B", "P0 tuned, echo_buyer_total=False", V, "real", "echo_buyer_total=False"),
+    ("C", "P0 with re-slice (echo_buyer_total=True)", V, "real", "echo_buyer_total=True"),
+    ("D1", "C + allocator=proportional", V, "real", "echo_buyer_total=True,allocator=proportional"),
+    ("D2", "C + allocator=greedy", V, "real", "echo_buyer_total=True,allocator=greedy"),
 ]
 
 
