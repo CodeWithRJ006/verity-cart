@@ -168,7 +168,7 @@ def run_seed(seller, seed, n, buyers, impl, switches, store, policy, keep=None):
             cmd += ["--buyers", buyers]
         p = subprocess.run(cmd, cwd=str(KIT), env=env, capture_output=True, text=True)
         if p.returncode:
-            raise RuntimeError((p.stderr or p.stdout).strip().splitlines()[-1][:300])
+            raise RuntimeError(" ".join((p.stderr or p.stdout).strip().split())[-600:])
         rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
     m = metrics(rows)
     printed = re.search(r"^SCORE\s+(-?\d+(?:\.\d+)?)", p.stdout, re.M)
