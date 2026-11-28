@@ -77,7 +77,7 @@ def ladder_markdown(rows, base="A", title="Ablation ladder"):
     ]
     for name, desc, res, err in rows:
         if not res:
-            out.append("| %s | %s | unavailable: %s |||||||||" % (name, desc, (err or "")[:90].replace("|", "/")))
+            out.append("| %s | %s | unavailable: %s |||||||||" % (name, desc, (err or "")[-160:].replace("|", "/")))
             continue
         p = pooled(res)
         if name == base or base not in by:

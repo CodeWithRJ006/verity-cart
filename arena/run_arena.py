@@ -189,7 +189,7 @@ def execute(seller, seeds, buyers="public", n=210, impl=None, switches=None, lab
         keep = None
         if keep_logs:
             Path(keep_logs).mkdir(parents=True, exist_ok=True)
-            keep = str(Path(keep_logs) / ("%s_seed%d.jsonl" % (label, s)))
+            keep = str(Path(keep_logs).resolve() / ("%s_seed%d.jsonl" % (label, s)))
         m, d, r = run_seed(seller, s, n, barg, impl, switches, store, policy, keep)
         per[str(s)] = m
         pn.update(d)
