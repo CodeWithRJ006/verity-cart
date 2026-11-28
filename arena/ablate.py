@@ -16,10 +16,10 @@ ROWS = [
     ("A", "Kit example seller (baseline)", "kit/example_seller.py", None, None),
     ("S", "Feasibility spike (reference)", "seller_spike.py", None, None),
     ("B0", "Gate+templates, baseline acceptance rule", V, "baseline", None),
-    ("B", "P0 tuned, echo_buyer_total=false", V, "real", "echo_buyer_total=false"),
-    ("C", "P0 with re-slice (echo_buyer_total=true)", V, "real", "echo_buyer_total=true"),
-    ("D1", "C + allocator=proportional", V, "real", "echo_buyer_total=true,allocator=proportional"),
-    ("D2", "C + allocator=greedy", V, "real", "echo_buyer_total=true,allocator=greedy"),
+    ("B", "P0 tuned, echo_buyer_total=False", V, "real", "echo_buyer_total=False"),
+    ("C", "P0 with re-slice (echo_buyer_total=True)", V, "real", "echo_buyer_total=True"),
+    ("D1", "C + allocator=proportional", V, "real", "echo_buyer_total=True,allocator=proportional"),
+    ("D2", "C + allocator=greedy", V, "real", "echo_buyer_total=True,allocator=greedy"),
 ]
 
 
@@ -45,9 +45,14 @@ def main():
             table.append((name, desc, res, None))
         except (RuntimeError, SystemExit) as e:
             table.append((name, desc, None, str(e)))
-        print("row %-2s %s" % (name, "ok" if name in done else "UNAVAILABLE: " + table[-1][3][:100]))
+        print("row %-2s %s" % (name, "ok" if name in done else "UNAVAILABLE: " + table[-1][3][-220:]))
+    if "D1" in done and "D2" in done and done["D1"]["per_negotiation"] == done["D2"]["per_negotiation"]:
+        print("NOTE: D1 and D2 are identical per negotiation: allocator switch is a no-op, do not report row D")
+        table = [(n, d + " [IDENTICAL to D1: no-op]" if n == "D2" else d, r, e) for n, d, r, e in table]
     md = stats.ladder_markdown(table, "A", "Ablation ladder (%s seeds %s, buyers %s)" % (kind, a.seeds, a.buyers))
     stem = "ablation_%s_%s" % (a.buyers.replace("/", "_").replace("\\", "_"), a.seeds.replace(",", "-"))
+    if a.rows:
+        stem += "_rows-" + "-".join(want)  # a partial run must not collide with the full table
     f = R.write_json({"git_sha": R.git_sha(), "label": stem, "seeds": seeds, "buyers": a.buyers, "rows": done}, stem, a.out)
     m = f.with_suffix(".md")
     if m.exists() and m.read_text(encoding="utf-8") != md:
