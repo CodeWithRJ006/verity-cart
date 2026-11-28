@@ -1,4 +1,3 @@
-@'
 # Experiment log (Dev2)
 
 Entries are append-only. Each records hypothesis, switches, seeds, result files, decision.
@@ -32,6 +31,36 @@ T=3.9912916647685157,e=0.9204433964469012,slack=0.019942957669350385,g=0.4969409
 **Open question.** Under spike defaults, family TRAIN deal rate "where possible" is only 0.57-0.66: about a third of feasible negotiations end with no deal and are not counted as deadlocks. Ceiling unknown.
 
 **Caveat.** TEST is 8 configs, about 26 negotiations each per seed: the CI is wide; "no significant difference" is not "no difference". Public bots are not the hidden LLM buyers.
-'@ | Set-Content -Encoding utf8 experiments\LOG.md
-Get-Content experiments\LOG.md -TotalCount 8
-git --no-pager status --short
+
+## 2026-11-28 - Reproduction of the DEV-EVAL comparison (no new decision)
+
+
+
+Run on main fbf77cc (= tag v1.0-freeze), seeds 0,7,8,9, n=210. The frozen plateau-pick switches are the ones in the 2026-11-26 entry above.
+
+Commands (repo root): `python experiments\\local_runner.py --seeds 0,7,8,9 --buyers public --out experiments\\tuning\\dev_eval --label spike_public`, then the same with `--switches <pick>` and `--label pick_public`; the same pairs for `--buyers family --split TRAIN` (spike_train, pick_train) and `--split TEST` (spike_test, pick_test). Compare each pair with `python experiments\\stats.py --a <pick file> --b <spike file>`.
+
+Files: `experiments/tuning/dev_eval/2026-11-28_fbf77cc_local_{spike,pick}_{public,train,test}.json` (per-seed scores, per-negotiation lists, scenario hashes). They replace the %TEMP% files mentioned above.
+
+
+
+Pick minus spike, 840 paired negotiations, 10000 resamples:
+
+
+
+| Source | Spike | Pick | Diff | 95% CI | stats.py verdict |
+
+|---|---|---|---|---|---|
+
+| public | 50.7 | 49.9 | -0.790 | [-0.981, -0.557] | spike better |
+
+| family TRAIN | 29.8 | 43.5 | +13.653 | [+11.693, +15.655] | pick better (in-sample) |
+
+| family TEST | 38.3 | 39.0 | +0.630 | [-0.308, +1.637] | no significant difference |
+
+
+
+Per-seed differences (0,7,8,9): public -0.838, -0.522, -0.855, -0.944; TRAIN +12.626, +15.378, +13.472, +13.136; TEST -0.178, +0.102, +1.645, +0.948 (seed 8 contributes most).
+
+These reproduce the table of the 2026-11-26 entry exactly. Decision unchanged: NOT ADOPTED, spike defaults kept.
+
