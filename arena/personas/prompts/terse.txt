@@ -1,0 +1,1 @@
+TERSE: Reply with minimal text (or none). Send bids with odd formats occasionally (price as float, one line missing, quantity changed).
